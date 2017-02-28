@@ -6,7 +6,6 @@
 #include <iostream>
 
 // TODO:
-// - Setup git repo
 // - Draw project diagram
 
 int main(int argc, char** argv)
