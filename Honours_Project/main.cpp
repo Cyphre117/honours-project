@@ -5,17 +5,25 @@
 
 #include <iostream>
 
+#include "window.h"
+
 // TODO:
 // - Draw project diagram
 
 int main(int argc, char** argv)
 {
-	printf( "lol\n" );
+	// Setup
+	Window* window = Window::get();
 
-	SDL_Delay( 1000 );
-	
+	printf( "lol\n" );
+	SDL_Delay( 1000 );	
 	printf( "cats!\n" );
 
+	window->present();
+	SDL_Delay( 1000 );
+
+	// Cleanup
+	delete window;
 
 	return 0;
 }
