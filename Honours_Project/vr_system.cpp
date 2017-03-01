@@ -48,6 +48,23 @@ bool VRSystem::init()
 {
 	bool success = true;
 
+	/* PRELIMINARY CHECKS */
+	{
+		bool is_hmd_present = vr::VR_IsHmdPresent();
+		std::cout << "Found HMD: " << (is_hmd_present ? "yes" : "no") << std::endl;
+		if( !is_hmd_present ) success = false;
+
+		bool is_runtime_installed = vr::VR_IsRuntimeInstalled();
+		std::cout << "Found OpenVR runtime: " << (is_runtime_installed ? "yes" : "no") << std::endl;
+		if( !is_runtime_installed ) success = false;
+
+		if( !success )
+		{
+			SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "error", "Something is missing...", NULL );
+			return success;
+		}
+	}
+
 	/* INIT THE VR SYSTEM */
 	vr::EVRInitError error = vr::VRInitError_None;
 	vr_system_ = vr::VR_Init( &error, vr::VRApplication_Scene );
@@ -60,36 +77,40 @@ bool VRSystem::init()
 		success = false;
 		return success;
 	}
-	
+
+	/* PRINT SYSTEM INFO */
+	std::cout << "Tracking System: " << getDeviceString( vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_TrackingSystemName_String, NULL ) << std::endl;
+	std::cout << "Serial Number: " << getDeviceString( vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SerialNumber_String, NULL ) << std::endl;
+
 	vr_system_->GetRecommendedRenderTargetSize( &render_target_width_, &render_target_height_ );
 
 	/* SETUP FRAME BUFFERS */
 	for( int i = 0; i < 2; i++ )
 	{
 		// Create render frame buffer
-		glGenFramebuffers( 1, &EyeBuffers[i].render_frame_buffer );
-		glBindFramebuffer( GL_FRAMEBUFFER, EyeBuffers[i].render_frame_buffer );
+		glGenFramebuffers( 1, &eye_buffers_[i].render_frame_buffer );
+		glBindFramebuffer( GL_FRAMEBUFFER, eye_buffers_[i].render_frame_buffer );
 		// Attach depth component
-		glGenRenderbuffers( 1, &EyeBuffers[i].render_depth );
-		glBindRenderbuffer( GL_RENDERBUFFER, EyeBuffers[i].render_depth );
+		glGenRenderbuffers( 1, &eye_buffers_[i].render_depth );
+		glBindRenderbuffer( GL_RENDERBUFFER, eye_buffers_[i].render_depth );
 		glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );
-		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, EyeBuffers[i].render_depth );
+		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, eye_buffers_[i].render_depth );
 		// Attach colour component
-		glGenTextures( 1, &EyeBuffers[i].render_texture );
-		glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, EyeBuffers[i].render_texture );
+		glGenTextures( 1, &eye_buffers_[i].render_texture );
+		glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture );
 		glTexImage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA8, render_target_width_, render_target_height_, true );
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, EyeBuffers[i].render_texture, 0 );
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture, 0 );
 
 		// Create resolve frame buffer
-		glGenFramebuffers( 1, &EyeBuffers[i].resolve_frame_buffer );
-		glBindFramebuffer( GL_FRAMEBUFFER, EyeBuffers[i].resolve_frame_buffer );
+		glGenFramebuffers( 1, &eye_buffers_[i].resolve_frame_buffer );
+		glBindFramebuffer( GL_FRAMEBUFFER, eye_buffers_[i].resolve_frame_buffer );
 		// Attach colour component
-		glGenTextures( 1, &EyeBuffers[i].resolve_texture );
-		glBindTexture( GL_TEXTURE_2D, EyeBuffers[i].resolve_texture );
+		glGenTextures( 1, &eye_buffers_[i].resolve_texture );
+		glBindTexture( GL_TEXTURE_2D, eye_buffers_[i].resolve_texture );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0 );
 		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, EyeBuffers[i].resolve_texture, 0 );
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eye_buffers_[i].resolve_texture, 0 );
 
 		// Check everything went OK
 		if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )	{
@@ -115,22 +136,29 @@ void VRSystem::processVREvents()
 	}
 }
 
+void VRSystem::updatePoses()
+{
+	vr::VRCompositor()->WaitGetPoses( poses_, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
+
+	for( int device = 0; device < vr::k_unMaxTrackedDeviceCount; device++ )
+	{
+		// TODO: see UpdatePoses in main.cpp of vive input test
+	}
+}
+
 void VRSystem::bindEyeTexture( vr::EVREye eye )
 {
-	int index = (eye == vr::Eye_Left ? 0 : 1);
-
-	glEnable( GL_MULTISAMPLE );
-	glBindFramebuffer( GL_FRAMEBUFFER, EyeBuffers[index].render_frame_buffer );
+	glBindFramebuffer( GL_FRAMEBUFFER, renderEyeTexture(eye) );
 	glViewport( 0, 0, render_target_width_, render_target_height_ );
 }
 
-void VRSystem::resolveEyeTextures()
+void VRSystem::blitEyeTextures()
 {
 	for( int i = 0; i < 2; i++ )
 	{
 		// Blit from the render frame buffer to the resolve
-		glBindFramebuffer( GL_READ_BUFFER, EyeBuffers[i].render_frame_buffer );
-		glBindFramebuffer( GL_DRAW_BUFFER, EyeBuffers[i].resolve_frame_buffer );
+		glBindFramebuffer( GL_READ_BUFFER, eye_buffers_[i].render_frame_buffer );
+		glBindFramebuffer( GL_DRAW_BUFFER, eye_buffers_[i].resolve_frame_buffer );
 		glBlitFramebuffer(
 			0, 0, render_target_width_, render_target_height_,
 			0, 0, render_target_width_, render_target_height_,
@@ -140,21 +168,22 @@ void VRSystem::resolveEyeTextures()
 
 void VRSystem::submitEyeTextures()
 {
-	// TODO: only submit if we have input focus
+	if( hasInputFocus() )
+	{
+		// NOTE: to find out what the error codes mean Ctal+F 'enum EVRCompositorError' in 'openvr.h'
+		vr::EVRCompositorError error = vr::VRCompositorError_None;
 
-	// NOTE: to find out what the error codes mean Ctal+F 'enum EVRCompositorError' in 'openvr.h'
-	vr::EVRCompositorError error = vr::VRCompositorError_None;
+		vr::Texture_t left = { (void*)eye_buffers_[0].resolve_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+		error = vr::VRCompositor()->Submit( vr::Eye_Left, &left, NULL );
+		if( error != vr::VRCompositorError_None ) std::cout << "ERROR: left eye  " << error << std::endl;
 
-	vr::Texture_t left = { (void*)EyeBuffers[0].resolve_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
-	error = vr::VRCompositor()->Submit( vr::Eye_Left, &left, NULL );
-	if( error != vr::VRCompositorError_None ) std::cout << "ERROR: left eye " << error << std::endl;
+		vr::Texture_t right = { (void*)eye_buffers_[1].resolve_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+		error = vr::VRCompositor()->Submit( vr::Eye_Right, &right, NULL );
+		if( error != vr::VRCompositorError_None ) std::cout << "ERROR: right eye " << error << std::endl;
 
-	vr::Texture_t right = { (void*)EyeBuffers[1].resolve_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
-	error = vr::VRCompositor()->Submit( vr::Eye_Right, &right, NULL );
-	if( error != vr::VRCompositorError_None ) std::cout << "ERROR: right eye " << error << std::endl;
-
-	// Added on advice from comments in IVRCompositor::submit in openvr.h
-	glFlush();
+		// Added on advice from comments in IVRCompositor::submit in openvr.h
+		glFlush();
+	}
 }
 
 glm::mat4 VRSystem::projectionMartix( vr::Hmd_Eye eye )

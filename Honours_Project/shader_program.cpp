@@ -5,7 +5,7 @@
 // Shader base path is found by SDL the first time it is needed
 std::string ShaderProgram::shader_base_path_ = "";
 // The folder to look in relative to the base path
-#define SHADER_FOLDER "../../Honours_Project/shaders"
+#define SHADER_FOLDER "shaders"
 
 #ifdef _WIN32
     #define PATH_SEPERATOR '\\'

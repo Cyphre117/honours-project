@@ -11,16 +11,19 @@ public:
 	~VRSystem();
 
 	void processVREvents();
+	void updatePoses();
 	void bindEyeTexture( vr::EVREye eye );
-	void resolveEyeTextures();
+	void blitEyeTextures();
 	void submitEyeTextures();
 
 	// Getters
-	bool hasInputFocus() { return !vr_system_->IsInputFocusCapturedByAnotherProcess(); }
 	uint32_t renderTargetWidth() { return render_target_width_; }
 	uint32_t renderTargetHeight() { return render_target_height_; }
 	glm::mat4 projectionMartix( vr::Hmd_Eye eye );
 	glm::mat4 eyePoseMatrix( vr::Hmd_Eye eye );
+	inline bool hasInputFocus() { return !vr_system_->IsInputFocusCapturedByAnotherProcess(); }
+	inline GLuint renderEyeTexture( vr::Hmd_Eye eye ) { return eye_buffers_[(eye == vr::Eye_Left ? 0 : 1)].render_frame_buffer; }
+	inline GLuint resolveEyeTexture( vr::Hmd_Eye eye ) { return eye_buffers_[(eye == vr::Eye_Left ? 0 : 1)].resolve_frame_buffer; }
 
 	// Helpers
 	std::string getDeviceString( vr::TrackedDeviceIndex_t device, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError* error );
@@ -33,6 +36,8 @@ private:
 	bool init();
 
 	vr::IVRSystem* vr_system_;
+
+	vr::TrackedDevicePose_t poses_[vr::k_unMaxTrackedDeviceCount];
 
 	uint32_t render_target_width_;
 	uint32_t render_target_height_;
@@ -47,5 +52,5 @@ private:
 		GLuint render_frame_buffer;
 		GLuint resolve_texture;
 		GLuint resolve_frame_buffer;
-	} EyeBuffers[2]; // 0 is left, 1, is right
+	} eye_buffers_[2]; // 0 is left, 1, is right
 };
