@@ -98,5 +98,74 @@ bool Window::init()
 		success = false;
 	}
 
+	/* INIT WINDOW SHADER */
+	window_shader_.loadVertexSourceFile("window_shader_vs.glsl");
+	window_shader_.loadFragmentSourceFile("window_shader_fs.glsl");
+	bool result = window_shader_.init();
+	if( !result ) {
+		std::cout << "ERROR: failed to init window shader!" << std::endl;
+	}
+
+	/* CREATE WINDOW MESHS */
+	{
+		GLfloat verts[] =
+		{
+			// Left side
+			-1.0, -1.0f, 0,		0.0, 0.0,
+			0.0, -1.0, 0,		1.0, 0.0,
+			-1.0, 1.0, 0,		0.0, 1.0,
+			0.0, 1.0, 0,		1.0, 1.0,
+
+			// Right side
+			0.0, -1.0, 0,		0.0, 0.0,
+			1.0, -1.0, 0,		1.0, 0.0,
+			0.0, 1.0, 0,		0.0, 1.0,
+			1.0, 1.0, 0,		1.0, 1.0
+		};
+		GLushort indices[] = { 0, 1, 3, 0, 3, 2, 4, 5, 7, 4, 7, 6 };
+		glGenVertexArrays( 1, &vao_ );
+		glBindVertexArray( vao_ );
+		GLuint vbo;
+		glGenBuffers( 1, &vbo );
+		glBindBuffer( GL_ARRAY_BUFFER, vao_ );
+		glBufferData( GL_ARRAY_BUFFER, sizeof( verts ), verts, GL_STATIC_DRAW );
+		GLuint ebo;
+		glGenBuffers( 1, &ebo );
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, ebo );
+		glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( indices ), indices, GL_STATIC_DRAW );
+		GLint posAttrib = window_shader_.getAttribLocation( "vPosition" );
+		glEnableVertexAttribArray( posAttrib );
+		glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, 5 * sizeof( GLfloat ), 0 );
+		GLint uvAttrib = window_shader_.getAttribLocation( "vUV" );
+		glEnableVertexAttribArray( uvAttrib );
+		glVertexAttribPointer( uvAttrib, 2, GL_FLOAT, GL_FALSE, 5 * sizeof( GLfloat ), (void*)(3 * sizeof( GLfloat )) );
+	}
+
 	return success;
+}
+
+void Window::render( GLuint left_eye_texture, GLuint right_eye_texture )
+{
+	glDisable( GL_DEPTH_TEST );
+	glViewport( 0, 0, width_, height_ );
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+	glClearColor( 0.0f, 0.5f, 0.0f, 1.0f );
+	glClear( GL_COLOR_BUFFER_BIT );
+
+	window_shader_.bind();
+	glBindVertexArray( vao_ );
+
+	glBindTexture( GL_TEXTURE_2D, left_eye_texture );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0 );
+
+	glBindTexture( GL_TEXTURE_2D, right_eye_texture );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glDrawElements( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (const void *)(12) );
 }

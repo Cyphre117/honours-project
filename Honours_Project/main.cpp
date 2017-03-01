@@ -6,24 +6,39 @@
 #include <iostream>
 
 #include "window.h"
-
-// TODO:
-// - Draw project diagram
+#include "vr_system.h"
 
 int main(int argc, char** argv)
 {
 	// Setup
 	Window* window = Window::get();
+	VRSystem* vr_system = VRSystem::get();
 
-	printf( "lol\n" );
-	SDL_Delay( 1000 );	
-	printf( "cats!\n" );
+	bool done = false;
+	SDL_Event sdl_event;
+	while( !done )
+	{
+		while( SDL_PollEvent( &sdl_event ) )
+		{
+			if( sdl_event.type == SDL_QUIT ) done = true;
+			else if( sdl_event.type == SDL_KEYDOWN )
+			{
+				if( sdl_event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ) done = true;
+			}
+		}
 
-	window->present();
-	SDL_Delay( 1000 );
+		vr_system->processVREvents();
+
+		vr_system->resolveEyeTextures();
+		vr_system->submitEyeTextures();
+		
+		window->render( 0, 0 );
+		window->present();
+	}
 
 	// Cleanup
-	delete window;
+	if (vr_system) delete vr_system;
+	if (window) delete window;
 
 	return 0;
 }

@@ -21,10 +21,30 @@
     <ClCompile Include="window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="shader_program.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vr_system.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="window.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="shader_program.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="vr_system.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\window_shader_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\window_shader_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
