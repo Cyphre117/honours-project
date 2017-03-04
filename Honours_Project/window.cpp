@@ -147,8 +147,8 @@ bool Window::init()
 void Window::render( GLuint left_eye_texture, GLuint right_eye_texture )
 {
 	glDisable( GL_DEPTH_TEST );
-	glViewport( 0, 0, width_, height_ );
 	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+	glViewport( 0, 0, width_, height_ );
 	glClearColor( 0.0f, 0.5f, 0.0f, 1.0f );
 	glClear( GL_COLOR_BUFFER_BIT );
 

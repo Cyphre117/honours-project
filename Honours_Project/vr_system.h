@@ -21,6 +21,8 @@ public:
 	uint32_t renderTargetHeight() { return render_target_height_; }
 	glm::mat4 projectionMartix( vr::Hmd_Eye eye );
 	glm::mat4 eyePoseMatrix( vr::Hmd_Eye eye );
+	inline vr::TrackedDevicePose_t deviecPose( uint32_t device ) { return poses_[device]; }
+	inline glm::mat4 deviceTransform( uint32_t device ) { return transforms_[device]; }
 	inline bool hasInputFocus() { return !vr_system_->IsInputFocusCapturedByAnotherProcess(); }
 	inline GLuint renderEyeTexture( vr::Hmd_Eye eye ) { return eye_buffers_[(eye == vr::Eye_Left ? 0 : 1)].render_frame_buffer; }
 	inline GLuint resolveEyeTexture( vr::Hmd_Eye eye ) { return eye_buffers_[(eye == vr::Eye_Left ? 0 : 1)].resolve_frame_buffer; }
@@ -38,6 +40,7 @@ private:
 	vr::IVRSystem* vr_system_;
 
 	vr::TrackedDevicePose_t poses_[vr::k_unMaxTrackedDeviceCount];
+	glm::mat4 transforms_[vr::k_unMaxTrackedDeviceCount];
 
 	uint32_t render_target_width_;
 	uint32_t render_target_height_;

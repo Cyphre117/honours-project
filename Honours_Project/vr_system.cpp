@@ -18,6 +18,11 @@ VRSystem::VRSystem() :
 // Destructor
 VRSystem::~VRSystem()
 {
+	glDeleteFramebuffers( 1, &eye_buffers_[0].render_frame_buffer );
+	glDeleteFramebuffers( 1, &eye_buffers_[0].resolve_frame_buffer );
+	glDeleteFramebuffers( 1, &eye_buffers_[1].render_frame_buffer );
+	glDeleteFramebuffers( 1, &eye_buffers_[1].resolve_frame_buffer );
+
 	vr::VR_Shutdown();
 	// TODO: should i manually delete the vr_system ptr?
 	vr_system_ = nullptr;
@@ -88,18 +93,31 @@ bool VRSystem::init()
 	for( int i = 0; i < 2; i++ )
 	{
 		// Create render frame buffer
-		glGenFramebuffers( 1, &eye_buffers_[i].render_frame_buffer );
-		glBindFramebuffer( GL_FRAMEBUFFER, eye_buffers_[i].render_frame_buffer );
-		// Attach depth component
-		glGenRenderbuffers( 1, &eye_buffers_[i].render_depth );
-		glBindRenderbuffer( GL_RENDERBUFFER, eye_buffers_[i].render_depth );
-		glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );
-		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, eye_buffers_[i].render_depth );
+		glGenFramebuffers( 1, &eye_buffers_[i].render_frame_buffer );						// Create a FBO
+		glBindFramebuffer( GL_FRAMEBUFFER, eye_buffers_[i].render_frame_buffer );			// Bind the FBO
 		// Attach colour component
-		glGenTextures( 1, &eye_buffers_[i].render_texture );
-		glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture );
-		glTexImage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA8, render_target_width_, render_target_height_, true );
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture, 0 );
+		glGenTextures( 1, &eye_buffers_[i].render_texture );																				// Generate a colour texture
+		
+		glBindTexture( GL_TEXTURE_2D, eye_buffers_[i].render_texture );																		// Bind the texture
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );			// Create texture data
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eye_buffers_[i].render_texture, 0 );					// Attach the texture to the bound FBO
+
+		//glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture );															// Bind the multisampled texture
+		//glTexImage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA8, render_target_width_, render_target_height_, true );				// Create multisampled data
+		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture, 0 );		// Attach the multisampled texture to the bound FBO
+
+		// Attach depth component
+		glGenRenderbuffers( 1, &eye_buffers_[i].render_depth );																				// Generate a render buffer
+		glBindRenderbuffer( GL_RENDERBUFFER, eye_buffers_[i].render_depth );																// Bind the render buffer
+		//glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );			// Enable multisampling
+		glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );
+		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, eye_buffers_[i].render_depth );			// Attach the the render buffer as a depth buffer 
+
+		// Check everything went OK
+		if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE ) {
+			std::cout << "ERROR: incomplete render frame buffer!" << std::endl;
+			success = false;
+		}
 
 		// Create resolve frame buffer
 		glGenFramebuffers( 1, &eye_buffers_[i].resolve_frame_buffer );
@@ -109,12 +127,12 @@ bool VRSystem::init()
 		glBindTexture( GL_TEXTURE_2D, eye_buffers_[i].resolve_texture );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0 );
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
 		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eye_buffers_[i].resolve_texture, 0 );
 
 		// Check everything went OK
 		if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )	{
-			std::cout << "Error creating resolve frame buffer!\n" << std::endl;
+			std::cout << "ERROR: incomplete resolve frame buffer!" << std::endl;
 			success = false;
 		}
 
@@ -138,11 +156,17 @@ void VRSystem::processVREvents()
 
 void VRSystem::updatePoses()
 {
+	// Update the pose list
 	vr::VRCompositor()->WaitGetPoses( poses_, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 
 	for( int device = 0; device < vr::k_unMaxTrackedDeviceCount; device++ )
 	{
-		// TODO: see UpdatePoses in main.cpp of vive input test
+		if( poses_[device].bPoseIsValid )
+		{
+			// Translate the pose matrix to a glm::mat4 for ease of use
+			// The stored matrix is from device to absolute tracking position, we will probably want that inverted
+			transforms_[device] = glm::inverse( convertHMDmat3ToGLMMat4( poses_[device].mDeviceToAbsoluteTracking ) );
+		}
 	}
 }
 
@@ -150,6 +174,8 @@ void VRSystem::bindEyeTexture( vr::EVREye eye )
 {
 	glBindFramebuffer( GL_FRAMEBUFFER, renderEyeTexture(eye) );
 	glViewport( 0, 0, render_target_width_, render_target_height_ );
+	glEnable( GL_MULTISAMPLE );
+	glEnable( GL_DEPTH );
 }
 
 void VRSystem::blitEyeTextures()
@@ -157,6 +183,7 @@ void VRSystem::blitEyeTextures()
 	for( int i = 0; i < 2; i++ )
 	{
 		// Blit from the render frame buffer to the resolve
+		glViewport( 0, 0, render_target_width_, render_target_height_ );
 		glBindFramebuffer( GL_READ_BUFFER, eye_buffers_[i].render_frame_buffer );
 		glBindFramebuffer( GL_DRAW_BUFFER, eye_buffers_[i].resolve_frame_buffer );
 		glBlitFramebuffer(
