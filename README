@@ -1,0 +1,9 @@
+# Thomas Hope - Honours Project
+
+Point cloud rendering on the HTC Vive. Possibly works with other OpenVR compatible HMDs + controllers.
+
+## Dependancies
+
+- OpenVR v1.0.5
+- GLM v0.9.8.3
+- GLEW v2.0.0
