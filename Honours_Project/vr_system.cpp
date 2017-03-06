@@ -1,4 +1,6 @@
 #include "vr_system.h"
+#include "helpers.h"
+#include <gtc/type_ptr.hpp>
 #include <SDL.h>
 #include <iostream>
 
@@ -97,20 +99,18 @@ bool VRSystem::init()
 		glBindFramebuffer( GL_FRAMEBUFFER, eye_buffers_[i].render_frame_buffer );			// Bind the FBO
 		// Attach colour component
 		glGenTextures( 1, &eye_buffers_[i].render_texture );																				// Generate a colour texture
-		
-		glBindTexture( GL_TEXTURE_2D, eye_buffers_[i].render_texture );																		// Bind the texture
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );			// Create texture data
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eye_buffers_[i].render_texture, 0 );					// Attach the texture to the bound FBO
-
-		//glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture );															// Bind the multisampled texture
-		//glTexImage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA8, render_target_width_, render_target_height_, true );				// Create multisampled data
-		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture, 0 );		// Attach the multisampled texture to the bound FBO
+		//glBindTexture( GL_TEXTURE_2D, eye_buffers_[i].render_texture );																		// Bind the texture
+		//glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );			// Create texture data
+		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eye_buffers_[i].render_texture, 0 );					// Attach the texture to the bound FBO
+		glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture );															// Bind the multisampled texture
+		glTexImage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA8, render_target_width_, render_target_height_, true );				// Create multisampled data
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture, 0 );		// Attach the multisampled texture to the bound FBO
 
 		// Attach depth component
 		glGenRenderbuffers( 1, &eye_buffers_[i].render_depth );																				// Generate a render buffer
 		glBindRenderbuffer( GL_RENDERBUFFER, eye_buffers_[i].render_depth );																// Bind the render buffer
-		//glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );			// Enable multisampling
-		glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );
+		glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );			// Enable multisampling
+		//glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );
 		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, eye_buffers_[i].render_depth );			// Attach the the render buffer as a depth buffer 
 
 		// Check everything went OK
@@ -138,7 +138,23 @@ bool VRSystem::init()
 
 		// Unbind any bound frame buffer
 		glBindFramebuffer( GL_FRAMEBUFFER, 0 );
-		success = true;
+	}
+
+	/* INIT SHADERS */
+	{
+		controller_shader_.loadVertexSourceFile("colour_shader_vs.glsl");
+		controller_shader_.loadFragmentSourceFile("colour_shader_fs.glsl");
+		if( !controller_shader_.init() )
+		{
+			success = false;
+			return success;
+		}
+		else
+		{
+			controller_shader_modl_mat_locaton_ = controller_shader_.getUniformLocation( "model" );
+			controller_shader_view_mat_locaton_ = controller_shader_.getUniformLocation( "view" );
+			controller_shader_proj_mat_locaton_ = controller_shader_.getUniformLocation( "projection" );
+		}
 	}
 
 	return success;
@@ -151,6 +167,31 @@ void VRSystem::processVREvents()
 	while( vr_system_->PollNextEvent( &event, sizeof( event ) ) )
 	{
 		// TODO: handle events
+		//	- Can I handle controllers connected in here?
+		//	- Can I handle controllers disconnected here???
+	}
+}
+
+void VRSystem::manageDevices()
+{
+	// Init the left controller if it hasn't been initialised already
+	if( !left_controller_.isInitialised() )
+	{
+		vr::TrackedDeviceIndex_t left_index = vr_system_->GetTrackedDeviceIndexForControllerRole( vr::ETrackedControllerRole::TrackedControllerRole_LeftHand );
+		if( left_index != -1 )
+		{
+			left_controller_.init( left_index, vr_system_, controller_shader_ );
+		}
+	}
+
+	// Init the right controller if it hasn't been initialised already
+	if( !right_controller_.isInitialised() )
+	{
+		vr::TrackedDeviceIndex_t right_index = vr_system_->GetTrackedDeviceIndexForControllerRole( vr::ETrackedControllerRole::TrackedControllerRole_RightHand );
+		if( right_index != -1 )
+		{
+			right_controller_.init( right_index, vr_system_, controller_shader_ );
+		}
 	}
 }
 
@@ -159,14 +200,36 @@ void VRSystem::updatePoses()
 	// Update the pose list
 	vr::VRCompositor()->WaitGetPoses( poses_, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 
-	for( int device = 0; device < vr::k_unMaxTrackedDeviceCount; device++ )
+	for( int device_index = 0; device_index < vr::k_unMaxTrackedDeviceCount; device_index++ )
 	{
-		if( poses_[device].bPoseIsValid )
+		if( poses_[device_index].bPoseIsValid )
 		{
 			// Translate the pose matrix to a glm::mat4 for ease of use
 			// The stored matrix is from device to absolute tracking position, we will probably want that inverted
-			transforms_[device] = glm::inverse( convertHMDmat3ToGLMMat4( poses_[device].mDeviceToAbsoluteTracking ) );
+			transforms_[device_index] = glm::inverse( convertHMDmat3ToGLMMat4( poses_[device_index].mDeviceToAbsoluteTracking ) );
+		
+			// Pass controller poses to the controllers
+			if( left_controller_.index() == device_index ) left_controller_.setPose( poses_[device_index] );
+			if( right_controller_.index() == device_index ) right_controller_.setPose( poses_[device_index] );
 		}
+	}
+}
+
+void VRSystem::drawControllers( vr::EVREye eye )
+{
+	controller_shader_.bind();
+	glUniformMatrix4fv( controller_shader_view_mat_locaton_, 1, GL_FALSE, glm::value_ptr( viewMatrix( eye ) ) );
+	glUniformMatrix4fv( controller_shader_proj_mat_locaton_, 1, GL_FALSE, glm::value_ptr( projectionMartix( eye ) ) );
+
+	if( left_controller_.isInitialised() )
+	{
+		glUniformMatrix4fv( controller_shader_modl_mat_locaton_, 1, GL_FALSE, glm::value_ptr( left_controller_.deviceToAbsoluteTracking() ) );
+		left_controller_.draw();
+	}
+	if( right_controller_.isInitialised() )
+	{
+		glUniformMatrix4fv( controller_shader_modl_mat_locaton_, 1, GL_FALSE, glm::value_ptr( right_controller_.deviceToAbsoluteTracking() ) );
+		right_controller_.draw();
 	}
 }
 
@@ -237,24 +300,4 @@ std::string VRSystem::getDeviceString(
 	std::string result = buffer;
 	delete[] buffer;
 	return result;
-}
-
-glm::mat4 VRSystem::convertHMDmat3ToGLMMat4( vr::HmdMatrix34_t matrix )
-{
-	return glm::mat4(
-		matrix.m[0][0], matrix.m[1][0], matrix.m[2][0], 0.0,
-		matrix.m[0][1], matrix.m[1][1], matrix.m[2][1], 0.0,
-		matrix.m[0][2], matrix.m[1][2], matrix.m[2][2], 0.0,
-		matrix.m[0][3], matrix.m[1][3], matrix.m[2][3], 1.0f
-	);
-}
-
-glm::mat4 VRSystem::convertHMDmat4ToGLMmat4( vr::HmdMatrix44_t matrix )
-{
-	return glm::mat4(
-		matrix.m[0][0], matrix.m[1][0], matrix.m[2][0], matrix.m[3][0],
-		matrix.m[0][1], matrix.m[1][1], matrix.m[2][1], matrix.m[3][1],
-		matrix.m[0][2], matrix.m[1][2], matrix.m[2][2], matrix.m[3][2],
-		matrix.m[0][3], matrix.m[1][3], matrix.m[2][3], matrix.m[3][3]
-	);
 }

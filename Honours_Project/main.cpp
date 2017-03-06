@@ -72,27 +72,30 @@ int main(int argc, char** argv)
 		// - But blitting to the resolve buffer is not working
 
 		vr_system->processVREvents();
+		vr_system->manageDevices();
 		vr_system->updatePoses();
 
 		//vr_system->bindEyeTexture( vr::Eye_Left );
 		glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Left ) );
 		glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
 
-		glClearColor( 0, 0, 0, 1 );
-		//glClearDepth( 0.0f );
+		glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
+		glClearDepth( 0.0f );
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		render_scene( vr::Eye_Left );
+		vr_system->drawControllers( vr::Eye_Left );
 
 		//vr_system->bindEyeTexture( vr::Eye_Right );
 		glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Right ) );
 		glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
 
-		glClearColor( 0, 0, 0, 1 );
-		//glClearDepth( 0.0f );
+		glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
+		glClearDepth( 0.0f );
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		render_scene( vr::Eye_Right );
+		vr_system->drawControllers( vr::Eye_Right );
 
 		vr_system->blitEyeTextures();
 		vr_system->submitEyeTextures();
@@ -102,8 +105,8 @@ int main(int argc, char** argv)
 	}
 
 	// Cleanup
-	if (vr_system) delete vr_system;
-	if (window) delete window;
+	if( vr_system ) delete vr_system;
+	if( window ) delete window;
 
 	return 0;
 }
@@ -165,7 +168,7 @@ void render_scene( vr::EVREye eye )
 	
 	model_mat = view_mat = projection_mat = glm::mat4( 1.0 );
 
-	view_mat = vr_system->eyePoseMatrix( eye ) * vr_system->deviceTransform( vr::k_unTrackedDeviceIndex_Hmd );
+	view_mat = vr_system->viewMatrix( eye );
 	projection_mat = vr_system->projectionMartix( eye );
 
 	// Send matricies

@@ -102,12 +102,12 @@ void ShaderProgram::shutdown()
     glDeleteShader( fragment_shader_ );
 }
 
-void ShaderProgram::bind()
+void ShaderProgram::bind() const
 {
 	glUseProgram( program_ );
 }
 
-GLint ShaderProgram::getUniformLocation( const GLchar* name )
+GLint ShaderProgram::getUniformLocation( const GLchar* name ) const
 {
     GLint uniform = glGetUniformLocation( program_, name );
     if( uniform == -1 ) {
@@ -117,7 +117,7 @@ GLint ShaderProgram::getUniformLocation( const GLchar* name )
 }
 
 
-GLint ShaderProgram::getAttribLocation( const GLchar* name )
+GLint ShaderProgram::getAttribLocation( const GLchar* name ) const
 {
     GLint attribute = glGetAttribLocation( program_, name );
     if( attribute == -1 ) {

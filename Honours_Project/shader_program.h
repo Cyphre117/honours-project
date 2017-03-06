@@ -25,12 +25,12 @@ public:
 	void setFragmentSourceString( const std::string& source ) { fragment_source_ = source; }
 
 	// Bind the shader to the OpenGL context, ready for use
-	void bind();
+	void bind() const;
 
 	// Don't forget to bind shaders before trying to get uniforms or attributes
-	GLint getUniformLocation( const GLchar* name );
-	GLint getAttribLocation( const GLchar* name );
-	GLint getProgram() { return program_; }
+	GLint getUniformLocation( const GLchar* name ) const;
+	GLint getAttribLocation( const GLchar* name ) const;
+	GLint getProgram() const { return program_; }
 
 private:
 	// Loads the text file 'filename' and passes the contents to the pointer
