@@ -31,5 +31,6 @@ protected:
 	glm::mat4 view_mat_;
 	glm::mat4 projection_mat_;
 
-	GLuint vao_;
+	GLuint floor_vao_;
+	GLsizei num_floor_verts_;
 };

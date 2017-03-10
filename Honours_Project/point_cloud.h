@@ -2,6 +2,7 @@
 #include "shader_program.h"
 #include <glm.hpp>
 #include <openvr.h>
+#include "ply_loader.h"
 
 class PointCloud
 {
@@ -14,6 +15,9 @@ public:
 
 protected:
 
+	PlyLoader ply_loader_;
+	std::vector<GLfloat> data_;
+
 	ShaderProgram shader_;
 	GLint modl_matrix_location_;
 	GLint view_matrix_location_;
@@ -24,5 +28,12 @@ protected:
 
 	GLuint vao_;
 	GLuint vbo_;
-	size_t num_verts_;
+	GLsizei num_verts_;
+
+
+	void calculateAABB();
+
+	GLuint aabb_vao_;
+	glm::vec3 lower_bound_;
+	glm::vec3 upper_bound_;
 };

@@ -154,6 +154,7 @@
   <ItemGroup>
     <ClCompile Include="controller.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ply_loader.cpp" />
     <ClCompile Include="point_cloud.cpp" />
     <ClCompile Include="scene.cpp" />
     <ClCompile Include="shader_program.cpp" />
@@ -164,6 +165,7 @@
   <ItemGroup>
     <ClInclude Include="controller.h" />
     <ClInclude Include="helpers.h" />
+    <ClInclude Include="ply_loader.h" />
     <ClInclude Include="point_cloud.h" />
     <ClInclude Include="scene.h" />
     <ClInclude Include="shader_program.h" />

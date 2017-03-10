@@ -2,19 +2,16 @@
 #include "window.h"
 #include "vr_system.h"
 #include <gtc/type_ptr.hpp>
+#include <vector>
 
 Scene::Scene() :
 	window_(nullptr),
 	vr_system_(nullptr),
-	vao_(0)
+	floor_vao_(0)
 {
-
 }
 
-Scene::~Scene()
-{
-
-}
+Scene::~Scene() {}
 
 bool Scene::init()
 {
@@ -28,39 +25,72 @@ bool Scene::init()
 	modl_matrix_location_ = shader_.getUniformLocation( "model" );
 	view_matrix_location_ = shader_.getUniformLocation( "view" );
 	proj_matrix_location_ = shader_.getUniformLocation( "projection" );
-	
-	// Setup scene data
+		
+	// Create circular floor grid
 	{
-		// Some hardcoded Triangles
-		float vertices[] = {
-			// ground triangle
-			0.0f, 0.0f, -0.7f, 0.5f, 1.0f, 0.5f,
-			0.5f, 0.0f,  0.5f, 0.8f, 0.5f, 0.8f,
-			-0.5f, 0.0f,  0.5f, 0.8f, 0.5f, 0.8f,
+		std::vector<GLfloat> verts;
 
-			// rear triangle
-			0.0f, 1.0f, 1.0f, 1.0f, 0.0f, 1.0f,
-			0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-			-0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+		int rings = 10;
+		float max_radius = 10.0f;
 
-			// forward left triangle
-			-1.0f, 0.9f, -1.0f, 1.0f, 1.0f, 1.0f,
-			-0.8f, 0.0f, -1.3f, 0.0f, 1.0f, 1.0f,
-			-1.3f, 0.0f, -0.8f, 1.0f, 1.0f, 1.0f,
+		int segments = 60;
+		float inc = (3.1415*2.0f)/segments;
 
-			// forward right triangle
-			1.0f, 0.9f, -1.0f, 1.0f, 1.0f, 1.0f,
-			0.8f, 0.0f, -1.3f, 0.0f, 1.0f, 1.0f,
-			1.3f, 0.0f, -0.8f, 1.0f, 1.0f, 1.0f
-		};
+		for( int r = 0; r < rings; r++ )
+		{
+			for( int i = 0; i < segments; i++ )
+			{
+				verts.push_back( std::sin( i * inc ) * max_radius * (r / float(rings)) );
+				verts.push_back( 0.0f );
+				verts.push_back( std::cos( i * inc ) * max_radius * (r / float(rings)) );
+				verts.push_back( (1.0f - (r / float(rings))) * 0.0f );
+				verts.push_back( (1.0f - (r / float(rings))) * 0.8f );
+				verts.push_back( (1.0f - (r / float(rings))) * 0.9f );
 
-		glGenVertexArrays( 1, &vao_ );
-		glBindVertexArray( vao_ );
+				if( i == segments - 1 )
+				{
+					verts.push_back( std::sin( 0 ) * max_radius * (r / float( rings )) );
+					verts.push_back( 0.0f );
+					verts.push_back( std::cos( 0 ) * max_radius * (r / float( rings )) );
+				}
+				else {
+					verts.push_back( std::sin( (i + 1) * inc ) * max_radius * (r / float( rings )) );
+					verts.push_back( 0.0f );
+					verts.push_back( std::cos( (i + 1) * inc ) * max_radius * (r / float( rings )) );
+				}
 
-		GLuint scene_vbo;
-		glGenBuffers( 1, &scene_vbo ); // Generate 1 buffer
-		glBindBuffer( GL_ARRAY_BUFFER, scene_vbo );
-		glBufferData( GL_ARRAY_BUFFER, sizeof( vertices ), vertices, GL_STATIC_DRAW );
+				verts.push_back( (1.0f - (r / float(rings))) * 0.0f );
+				verts.push_back( (1.0f - (r / float(rings))) * 0.8f );
+				verts.push_back( (1.0f - (r / float(rings))) * 0.9f );
+			}
+		}
+
+		// create triangle at feet
+		verts.push_back( 0.0f ); verts.push_back( 0.0f ); verts.push_back(-0.7f );
+		verts.push_back( 0.2f ); verts.push_back( 0.5f ); verts.push_back( 0.2f );
+		
+		verts.push_back( 0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
+		verts.push_back( 0.4f ); verts.push_back( 0.2f ); verts.push_back( 0.4f );
+
+		verts.push_back( 0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
+		verts.push_back( 0.4f ); verts.push_back( 0.2f ); verts.push_back( 0.4f );
+
+		verts.push_back(-0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
+		verts.push_back( 0.4f ); verts.push_back( 0.2f ); verts.push_back( 0.4f );
+
+		verts.push_back( -0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
+		verts.push_back( 0.4f ); verts.push_back( 0.2f ); verts.push_back( 0.4f );
+
+		verts.push_back( 0.0f ); verts.push_back( 0.0f ); verts.push_back( -0.7f );
+		verts.push_back( 0.2f ); verts.push_back( 0.5f ); verts.push_back( 0.2f );
+
+		GLuint vbo;
+		glGenVertexArrays( 1, &floor_vao_ );
+		glBindVertexArray( floor_vao_ );
+		glGenBuffers( 1, &vbo );
+		glBindBuffer( GL_ARRAY_BUFFER, vbo );
+		glBufferData( GL_ARRAY_BUFFER, sizeof( verts[0] ) * verts.size(), verts.data(), GL_STATIC_DRAW );
+		num_floor_verts_ = verts.size() / 6;
 
 		GLuint stride = 2 * 3 * sizeof( GLfloat );
 		GLuint offset = 0;
@@ -73,8 +103,6 @@ bool Scene::init()
 		GLint colAttrib = shader_.getAttribLocation( "vColour" );
 		glEnableVertexAttribArray( colAttrib );
 		glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
-
-		glBindVertexArray( 0 );
 	}
 
 	return true;
@@ -82,8 +110,8 @@ bool Scene::init()
 
 void Scene::shutdown()
 {
-	glDeleteVertexArrays( 1, &vao_ );
-	vao_ = 0;
+	glDeleteVertexArrays( 1, &floor_vao_ );
+	floor_vao_ = 0;
 }
 
 void Scene::render( vr::EVREye eye )
@@ -100,6 +128,6 @@ void Scene::render( vr::EVREye eye )
 	glUniformMatrix4fv( view_matrix_location_, 1, GL_FALSE, glm::value_ptr( view_mat_ ) );
 	glUniformMatrix4fv( proj_matrix_location_, 1, GL_FALSE, glm::value_ptr( projection_mat_ ) );
 
-	glBindVertexArray( vao_ );
-	glDrawArrays( GL_TRIANGLES, 0, 12 );
+	glBindVertexArray( floor_vao_ );
+	glDrawArrays( GL_LINES, 0, num_floor_verts_ );
 }

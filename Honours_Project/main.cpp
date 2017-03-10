@@ -19,8 +19,7 @@
 // - get blitting from multisampled from non multisampled texture working
 
 
-void init_scene() {}
-void render_scene( vr::EVREye eye ) {}
+void set_gl_attribs();
 
 int main(int argc, char** argv)
 {
@@ -42,8 +41,6 @@ int main(int argc, char** argv)
 		point_cloud.init();
 	}
 
-	init_scene();
-
 	while( running )
 	{
 		SDL_Event sdl_event;
@@ -64,24 +61,22 @@ int main(int argc, char** argv)
 		vr_system->manageDevices();
 		vr_system->updatePoses();
 
-		//vr_system->bindEyeTexture( vr::Eye_Left );
-		glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Left ) );
-		glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
-
-		glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
-		glClearDepth( 0.0f );
+		vr_system->bindEyeTexture( vr::Eye_Left );
+		//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Left ) );
+		//glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
+	
+		set_gl_attribs();
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		scene.render( vr::Eye_Left );
 		point_cloud.render( vr::Eye_Left );
 		vr_system->drawControllers( vr::Eye_Left );
 
-		//vr_system->bindEyeTexture( vr::Eye_Right );
-		glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Right ) );
-		glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
+		vr_system->bindEyeTexture( vr::Eye_Right );
+		//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Right ) );
+		//glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
 
-		glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
-		glClearDepth( 0.0f );
+		set_gl_attribs();
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		scene.render( vr::Eye_Right );
@@ -91,7 +86,7 @@ int main(int argc, char** argv)
 		vr_system->blitEyeTextures();
 		vr_system->submitEyeTextures();
 		
-		window->render( vr_system->resolveEyeTexture( vr::Eye_Left ), vr_system->resolveEyeTexture( vr::Eye_Right ) );
+		window->render( vr_system->renderEyeTexture( vr::Eye_Left ), vr_system->renderEyeTexture( vr::Eye_Right ) );
 		window->present();
 	}
 
@@ -101,4 +96,12 @@ int main(int argc, char** argv)
 	if( window ) delete window;
 
 	return 0;
+}
+
+void set_gl_attribs()
+{
+	glEnable( GL_DEPTH_TEST );
+	glDepthFunc( GL_LESS );
+	glClearColor( 0.01f, 0.01f, 0.01f, 1.0f );
+	glClearDepth( 1.0f );
 }
