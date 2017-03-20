@@ -142,8 +142,8 @@ bool VRSystem::init()
 
 	/* INIT SHADERS */
 	{
-		controller_shader_.loadVertexSourceFile("colour_shader_vs.glsl");
-		controller_shader_.loadFragmentSourceFile("colour_shader_fs.glsl");
+		controller_shader_.loadVertexSourceFile("render_model_shader_vs.glsl");
+		controller_shader_.loadFragmentSourceFile("render_model_shader_fs.glsl");
 		if( !controller_shader_.init() )
 		{
 			success = false;
@@ -180,7 +180,7 @@ void VRSystem::manageDevices()
 		vr::TrackedDeviceIndex_t left_index = vr_system_->GetTrackedDeviceIndexForControllerRole( vr::ETrackedControllerRole::TrackedControllerRole_LeftHand );
 		if( left_index != -1 )
 		{
-			left_controller_.init( left_index, vr_system_, controller_shader_ );
+			left_controller_.init( left_index, this, controller_shader_ );
 		}
 	}
 	else
@@ -194,7 +194,7 @@ void VRSystem::manageDevices()
 		vr::TrackedDeviceIndex_t right_index = vr_system_->GetTrackedDeviceIndexForControllerRole( vr::ETrackedControllerRole::TrackedControllerRole_RightHand );
 		if( right_index != -1 )
 		{
-			right_controller_.init( right_index, vr_system_, controller_shader_ );
+			right_controller_.init( right_index, this, controller_shader_ );
 		}
 	}
 	else

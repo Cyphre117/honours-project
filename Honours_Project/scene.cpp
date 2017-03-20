@@ -49,9 +49,9 @@ bool Scene::init()
 
 				if( i == segments - 1 )
 				{
-					verts.push_back( std::sin( 0 ) * max_radius * (r / float( rings )) );
+					verts.push_back( std::sin( 0.0f ) * max_radius * (r / float( rings )) );
 					verts.push_back( 0.0f );
-					verts.push_back( std::cos( 0 ) * max_radius * (r / float( rings )) );
+					verts.push_back( std::cos( 0.0f ) * max_radius * (r / float( rings )) );
 				}
 				else {
 					verts.push_back( std::sin( (i + 1) * inc ) * max_radius * (r / float( rings )) );
@@ -90,7 +90,7 @@ bool Scene::init()
 		glGenBuffers( 1, &vbo );
 		glBindBuffer( GL_ARRAY_BUFFER, vbo );
 		glBufferData( GL_ARRAY_BUFFER, sizeof( verts[0] ) * verts.size(), verts.data(), GL_STATIC_DRAW );
-		num_floor_verts_ = verts.size() / 6;
+		num_floor_verts_ = (GLsizei)verts.size() / 6;
 
 		GLuint stride = 2 * 3 * sizeof( GLfloat );
 		GLuint offset = 0;

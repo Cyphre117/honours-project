@@ -1,11 +1,14 @@
 #pragma once
-
-#include "shader_program.h"
 #include <glm.hpp>
 #include <openvr.h>
 
+#include "shader_program.h"
+
 // With help from: https://github.com/zecbmo/ViveSkyrim/blob/master/Source
 // Because the openvr documentation is sparse...
+
+// Forward declarations
+class VRSystem;
 
 class Controller
 {
@@ -13,7 +16,7 @@ public:
 	Controller();
 	~Controller();
 
-	void init( vr::TrackedDeviceIndex_t index, vr::IVRSystem* vr_system, const ShaderProgram& shader );
+	void init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, const ShaderProgram& shader );
 	void update();
 	void draw();
 	void handleEvent( vr::VREvent_t event );
@@ -59,6 +62,13 @@ protected:
 	vr::TrackedDevicePose_t pose_;
 
 	ShaderProgram* shader_;
-	GLuint vao_;
+	//GLuint vao_;
 	GLuint model_mat_location_;
+
+	GLuint model_vao_;
+	GLuint model_vbo_;
+	GLuint model_ebo_;
+	GLuint model_texture_;
+	GLsizei model_num_verts_;
+	std::string model_name_;
 };

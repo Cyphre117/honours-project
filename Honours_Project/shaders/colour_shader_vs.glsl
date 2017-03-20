@@ -4,8 +4,8 @@ uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
-in vec3 vPosition;
-in vec3 vColour;
+layout(location = 0) in vec3 vPosition;
+layout(location = 1) in vec3 vColour;
 
 out vec3 fColour;
 

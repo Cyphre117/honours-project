@@ -26,7 +26,8 @@ public:
 	glm::mat4 projectionMartix( vr::Hmd_Eye eye );
 	glm::mat4 eyePoseMatrix( vr::Hmd_Eye eye );
 	glm::mat4 viewMatrix( vr::Hmd_Eye eye ) { return eyePoseMatrix( eye ) * deviceTransform( vr::k_unTrackedDeviceIndex_Hmd ); }
-	
+	vr::IVRSystem* openVRVRSystem() { return vr_system_; };
+
 	// Returns NULL if the controller is not ready
 	Controller* leftControler() { return left_controller_.isInitialised() ? &left_controller_ : nullptr; }
 	Controller* rightControler() { return right_controller_.isInitialised() ? &right_controller_ : nullptr; }

@@ -2,63 +2,110 @@
 #include "helpers.h"
 #include "vr_system.h"
 #include <iostream>
+#include <vector>
 
 Controller::Controller() :
 	initialised_( false ),
 	vr_system_( nullptr ),
 	shader_( nullptr ),
-	vao_( 0 ),
+	//vao_( 0 ),
 	model_mat_location_( 0 ),
-	index_( vr::k_unTrackedDeviceIndexInvalid )
+	index_( vr::k_unTrackedDeviceIndexInvalid ),
+	model_vao_( 0 ),
+	model_vbo_( 0 ),
+	model_ebo_( 0 ),
+	model_texture_( 0 ),
+	model_num_verts_( 0 )
 {
 }
 
 Controller::~Controller()
 {
-
 }
 
-void Controller::init( vr::TrackedDeviceIndex_t index, vr::IVRSystem* vr_system, const ShaderProgram& shader )
+void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, const ShaderProgram& shader )
 {
-	vr_system_ = vr_system;
+	vr_system_ = vr_system->openVRVRSystem();
 	index_ = index;
 
 	initialised_ = true;
 	std::cout << "controller " << index << " initialised!" << std::endl;
 
-	GLfloat verts[] = {
-		0, 0, 0, 1, 0, 0,
-		.2, 0, 0, 1, 0, 0,
-
-		0, 0, 0, 0, 1, 0,
-		0, .2, 0, 0, 1, 0,
-
-		0, 0, 0, 0, 0, 1,
-		0, 0, .2, 0, 0, 1,
-	};
+	//GLfloat verts[] = {
+	//	0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+	//	0.2f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
+	//
+	//	0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
+	//	0.0f, 0.2f, 0.0f, 0.0f, 1.0f, 0.0f,
+	//
+	//	0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
+	//	0.0f, 0.0f, 0.2f, 0.0f, 0.0f, 1.0f,
+	//};
 
 	shader.bind();
-	glGenVertexArrays( 1, &vao_ );
-	glBindVertexArray( vao_ );
+	//glGenVertexArrays( 1, &vao_ );
+	//glBindVertexArray( vao_ );
 
-	GLuint vbo;
-	glGenBuffers( 1, &vbo );
-	glBindBuffer( GL_ARRAY_BUFFER, vbo );
-	glBufferData( GL_ARRAY_BUFFER, sizeof( verts ), verts, GL_STATIC_DRAW );
+	//GLuint vbo;
+	//glGenBuffers( 1, &vbo );
+	//glBindBuffer( GL_ARRAY_BUFFER, vbo );
+	//glBufferData( GL_ARRAY_BUFFER, sizeof( verts ), verts, GL_STATIC_DRAW );
 
-	GLuint stride = 2 * 3 * sizeof( GLfloat );
-	GLuint offset = 0;
+	//GLuint stride = 2 * 3 * sizeof( GLfloat );
+	//GLuint offset = 0;
 
-	GLint posAttrib = shader.getAttribLocation( "vPosition" );
-	glEnableVertexAttribArray( posAttrib );
-	glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offset );
+	//GLint posAttrib = shader.getAttribLocation( "vPosition" );
+	//glEnableVertexAttribArray( posAttrib );
+	//glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offset );
 
-	offset += sizeof( GLfloat ) * 3;
-	GLint colAttrib = shader.getAttribLocation( "vColour" );
-	glEnableVertexAttribArray( colAttrib );
-	glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offset );
+	//offset += sizeof( GLfloat ) * 3;
+	//GLint colAttrib = shader.getAttribLocation( "vColour" );
+	//glEnableVertexAttribArray( colAttrib );
+	//glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offset );
 
-	glBindVertexArray( 0 );
+	//glBindVertexArray( 0 );
+
+	// Setup render models
+	vr::RenderModel_t* vr_model = nullptr;
+	vr::TrackedPropertyError tracked_property_error;
+	std::string render_model_name = vr_system->getDeviceString( index_, vr::Prop_RenderModelName_String, &tracked_property_error );
+	vr::EVRRenderModelError render_model_error = vr::VRRenderModelError_Loading;
+	std::cout << "Trying to load model '" << render_model_name << "'..." << std::endl;
+
+	// Suspend the application while we wait for the render models to load
+	while( true )
+	{
+		render_model_error = vr::VRRenderModels()->LoadRenderModel_Async( render_model_name.c_str(), &vr_model );
+		if( render_model_error != vr::VRRenderModelError_Loading )
+			break;
+
+		SDL_Delay( 10 );
+	}
+	
+	if( render_model_error == vr::VRRenderModelError_None )
+	{
+		glGenVertexArrays( 1, &model_vao_ );
+		glBindVertexArray( model_vao_ );
+
+		glGenBuffers( 1, &model_vbo_ );
+		glBindBuffer( GL_ARRAY_BUFFER, model_vbo_ );
+		glBufferData( GL_ARRAY_BUFFER, sizeof( vr::RenderModel_Vertex_t ) * vr_model->unVertexCount, vr_model->rVertexData, GL_STATIC_DRAW );
+		model_num_verts_ = vr_model->unVertexCount;
+		std::cout << "loaded " << model_num_verts_ << " from render model" << std::endl;
+
+		// Identify the components in the vertex buffer
+		glEnableVertexAttribArray( 0 );
+		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, vPosition ) );
+		glEnableVertexAttribArray( 1 );
+		glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, vNormal ) );
+		glEnableVertexAttribArray( 2 );
+		glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, rfTextureCoord ) );
+	}
+	else
+	{
+		std::cout << "ERROR: could not load render model!" << std::endl;
+	}
+
 	glUseProgram( 0 );
 }
 
@@ -86,8 +133,11 @@ void Controller::update()
 
 void Controller::draw()
 {
-	glBindVertexArray( vao_ );
-	glDrawArrays( GL_LINES, 0, 6 );
+	//glBindVertexArray( vao_ );
+	//glDrawArrays( GL_LINES, 0, 6 );
+
+	glBindVertexArray( model_vao_ );
+	glDrawArrays( GL_POINTS, 0, model_num_verts_ );
 }
 
 void Controller::handleEvent( vr::VREvent_t event )

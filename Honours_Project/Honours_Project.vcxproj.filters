@@ -115,5 +115,11 @@
     <None Include="imgui\imgui_sdl2.inl">
       <Filter>libs\Dear Imgui</Filter>
     </None>
+    <None Include="shaders\render_model_shader_fs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\render_model_shader_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
