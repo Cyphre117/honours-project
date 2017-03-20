@@ -81,16 +81,40 @@ void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, cons
 
 		SDL_Delay( 10 );
 	}
-	
+
+	// Suspend the application while we wait for the texture data
+	vr::RenderModel_TextureMap_t* texture_;
+	while( true )
+	{
+		render_model_error = vr::VRRenderModels()->LoadTexture_Async( vr_model->diffuseTextureId, &texture_ );
+		if( render_model_error != vr::VRRenderModelError_Loading )
+			break;
+		
+		SDL_Delay( 10 );
+	}
+
+	if( render_model_error != vr::VRRenderModelError_None )
+	{
+		std::cout << "unable to load render model texture" << std::endl;
+	}
 	if( render_model_error == vr::VRRenderModelError_None )
 	{
 		glGenVertexArrays( 1, &model_vao_ );
 		glBindVertexArray( model_vao_ );
 
+		glGenBuffers( 1, &model_ebo_ );
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, model_ebo_ );
+		glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof( uint16_t ) * vr_model->unTriangleCount * 3, vr_model->rIndexData, GL_STATIC_DRAW );
+		model_num_verts_ = vr_model->unTriangleCount * 3;
+
+		glGenTextures( 1, &model_texture_ );
+		glBindTexture( GL_TEXTURE_2D, model_texture_ );
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, texture_->unWidth, texture_->unHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, texture_->rubTextureMapData );
+
 		glGenBuffers( 1, &model_vbo_ );
 		glBindBuffer( GL_ARRAY_BUFFER, model_vbo_ );
 		glBufferData( GL_ARRAY_BUFFER, sizeof( vr::RenderModel_Vertex_t ) * vr_model->unVertexCount, vr_model->rVertexData, GL_STATIC_DRAW );
-		model_num_verts_ = vr_model->unVertexCount;
+		//model_num_verts_ = vr_model->unVertexCount;
 		std::cout << "loaded " << model_num_verts_ << " from render model" << std::endl;
 
 		// Identify the components in the vertex buffer
@@ -100,6 +124,18 @@ void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, cons
 		glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, vNormal ) );
 		glEnableVertexAttribArray( 2 );
 		glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, rfTextureCoord ) );
+	
+
+		glGenerateMipmap( GL_TEXTURE_2D );
+
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
+
+		GLfloat fLargest;
+		glGetFloatv( GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest );
 	}
 	else
 	{
@@ -136,8 +172,10 @@ void Controller::draw()
 	//glBindVertexArray( vao_ );
 	//glDrawArrays( GL_LINES, 0, 6 );
 
+	glBindTexture( GL_TEXTURE_2D, model_texture_ );
 	glBindVertexArray( model_vao_ );
-	glDrawArrays( GL_POINTS, 0, model_num_verts_ );
+	//glDrawArrays( GL_POINTS, 0, model_num_verts_ );
+	glDrawElements( GL_TRIANGLES, model_num_verts_, GL_UNSIGNED_SHORT, 0 );
 }
 
 void Controller::handleEvent( vr::VREvent_t event )
