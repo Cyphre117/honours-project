@@ -18,6 +18,8 @@ public:
 	// Getters
 	int width() { return width_; }
 	int height() { return height_; }
+	SDL_Window* SDLWindow() { return win_; }
+	SDL_GLContext SDLGLContext() { return gl_context_; }
 
 private:
 	Window();

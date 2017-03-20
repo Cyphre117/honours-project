@@ -29,6 +29,7 @@ public:
 	glm::vec2 axis( vr::EVRButtonId button ) const;
 	glm::vec2 prevAxis( vr::EVRButtonId button ) const;
 	glm::vec2 axisDelta( vr::EVRButtonId button ) const;
+	glm::vec2 touchpadDelta() const;
 
 	// Getters: pose attributes
 	bool isPoseValid() const { return pose_.bPoseIsValid; }

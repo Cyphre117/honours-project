@@ -13,6 +13,13 @@ public:
 	bool init();
 	void render( vr::EVREye eye );
 
+	inline glm::mat4 modelMatrix() { return model_mat_; }
+	inline glm::vec3 lowerBound() { return lower_bound_; }
+	inline glm::vec3 upperBound() { return upper_bound_; }
+
+	void setModelMatrix( const glm::mat4& model ) { model_mat_ = model; }
+	void resetPosition();
+
 protected:
 
 	PlyLoader ply_loader_;
@@ -29,7 +36,6 @@ protected:
 	GLuint vao_;
 	GLuint vbo_;
 	GLsizei num_verts_;
-
 
 	void calculateAABB();
 

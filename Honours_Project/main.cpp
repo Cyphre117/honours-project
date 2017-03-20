@@ -3,23 +3,25 @@
 #include <glm.hpp>
 #include <openvr.h>
 
+#include <gtc/matrix_transform.hpp>
+#include <gtx/matrix_decompose.hpp>
 #include <iostream>
 
 #include "window.h"
 #include "vr_system.h"
 #include "scene.h"
 #include "point_cloud.h"
+#include "imgui/imgui.h"
 
 // TODO:
 // - Clear each eye to a diffrent colour
 //    works when clearing the resolve texture directly
 //    desn't seem to work when clearing the render texture and blitting to the resolve
 //
-// - Render a triangle to each eye
 // - get blitting from multisampled from non multisampled texture working
 
-
 void set_gl_attribs();
+void draw_gui();
 
 int main(int argc, char** argv)
 {
@@ -34,12 +36,17 @@ int main(int argc, char** argv)
 	if( !window ) running = false;
 	vr_system = VRSystem::get();
 	if( !vr_system ) running = false;
+	ImGui::Init( window->SDLWindow() );
 
 	if( running )
 	{
 		scene.init();
 		point_cloud.init();
 	}
+
+	float dt = 0.0;
+	Uint32 ticks = SDL_GetTicks();
+	Uint32 prev_ticks = ticks;
 
 	while( running )
 	{
@@ -51,15 +58,40 @@ int main(int argc, char** argv)
 			{
 				if( sdl_event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ) running = false;
 			}
+
+			ImGui::ProcessEvent( &sdl_event );
 		}
 
-		// THE RENDER TEXTURE IS CLEARED WHEN
-		// - render texture is not multisampled
-		// - But blitting to the resolve buffer is not working
+		// Hand tool tester code
+		if( vr_system->leftControler() )
+		{
+			if( vr_system->leftControler()->isButtonDown( vr::k_EButton_SteamVR_Trigger ) )
+			{
+				glm::vec2 delta = vr_system->leftControler()->touchpadDelta();
+				glm::mat4 model = point_cloud.modelMatrix();
+
+				glm::vec3 transform_delta = vr_system->leftControler()->velocity() * dt;
+				glm::vec3 rotation_delta = vr_system->leftControler()->angularVelocity() * dt;
+
+				model = glm::translate( model, transform_delta );
+				model = glm::rotate( model, glm::length(rotation_delta), rotation_delta);
+				point_cloud.setModelMatrix( model );
+			}
+			else if( vr_system->leftControler()->isButtonPressed( vr::k_EButton_Grip ) )
+			{
+				point_cloud.resetPosition();
+			}
+		}
 
 		vr_system->processVREvents();
 		vr_system->manageDevices();
 		vr_system->updatePoses();
+
+		ImGui::Frame( window->SDLWindow(), vr_system );
+
+		// THE RENDER TEXTURE IS CLEARED WHEN
+		// - render texture is not multisampled
+		// - But blitting to the resolve buffer is not working
 
 		vr_system->bindEyeTexture( vr::Eye_Left );
 		//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Left ) );
@@ -71,6 +103,9 @@ int main(int argc, char** argv)
 		scene.render( vr::Eye_Left );
 		point_cloud.render( vr::Eye_Left );
 		vr_system->drawControllers( vr::Eye_Left );
+
+		draw_gui();
+		ImGui::Render();
 
 		vr_system->bindEyeTexture( vr::Eye_Right );
 		//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Right ) );
@@ -88,6 +123,11 @@ int main(int argc, char** argv)
 		
 		window->render( vr_system->renderEyeTexture( vr::Eye_Left ), vr_system->renderEyeTexture( vr::Eye_Right ) );
 		window->present();
+
+		// Update dt
+		prev_ticks = ticks;
+		ticks = SDL_GetTicks();
+		dt = (ticks - prev_ticks) / 1000.0f;
 	}
 
 	// Cleanup
@@ -104,4 +144,21 @@ void set_gl_attribs()
 	glDepthFunc( GL_LESS );
 	glClearColor( 0.01f, 0.01f, 0.01f, 1.0f );
 	glClearDepth( 1.0f );
+}
+
+void draw_gui()
+{
+	ImGuiIO& IO = ImGui::GetIO();
+	IO.MouseDrawCursor = true;
+
+	ImGui::SetWindowFontScale( 3.0f );
+	ImGui::Text( "Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate );
+	ImGui::Separator();
+	
+	Controller* controller = VRSystem::get()->leftControler();
+	if( controller )
+	{
+		ImGui::Text( "Touchpad Delta: (%.2f, %.2f)", controller->touchpadDelta().x, controller->touchpadDelta().y );
+		ImGui::Text( "Trigger: %s", controller->isButtonDown( vr::k_EButton_SteamVR_Trigger ) ? "YES" : "NO" );
+	}
 }

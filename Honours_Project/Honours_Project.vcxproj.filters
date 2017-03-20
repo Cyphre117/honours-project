@@ -45,6 +45,15 @@
     <ClCompile Include="ply_loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="imgui\imgui.cpp">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_demo.cpp">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="imgui\imgui_draw.cpp">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="window.h">
@@ -71,6 +80,24 @@
     <ClInclude Include="ply_loader.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="imgui\imgui.h">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imgui_internal.h">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\stb_rect_pack.h">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\stb_textedit.h">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\stb_truetype.h">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="imgui\imconfig.h">
+      <Filter>libs\Dear Imgui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\window_shader_fs.glsl">
@@ -84,6 +111,9 @@
     </None>
     <None Include="shaders\colour_shader_fs.glsl">
       <Filter>Shaders</Filter>
+    </None>
+    <None Include="imgui\imgui_sdl2.inl">
+      <Filter>libs\Dear Imgui</Filter>
     </None>
   </ItemGroup>
 </Project>

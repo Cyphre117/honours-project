@@ -183,6 +183,10 @@ void VRSystem::manageDevices()
 			left_controller_.init( left_index, vr_system_, controller_shader_ );
 		}
 	}
+	else
+	{
+		left_controller_.update();
+	}
 
 	// Init the right controller if it hasn't been initialised already
 	if( !right_controller_.isInitialised() )
@@ -192,6 +196,10 @@ void VRSystem::manageDevices()
 		{
 			right_controller_.init( right_index, vr_system_, controller_shader_ );
 		}
+	}
+	else
+	{
+		right_controller_.update();
 	}
 }
 

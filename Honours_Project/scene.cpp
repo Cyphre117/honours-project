@@ -34,7 +34,7 @@ bool Scene::init()
 		float max_radius = 10.0f;
 
 		int segments = 60;
-		float inc = (3.1415*2.0f)/segments;
+		float inc = (3.1415f*2.0f)/(float)segments;
 
 		for( int r = 0; r < rings; r++ )
 		{

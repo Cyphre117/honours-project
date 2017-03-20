@@ -32,19 +32,7 @@ bool PointCloud::init()
 
 	shader_.bind();
 	calculateAABB();
-	
-	float scale = 0.6f / std::abs( upper_bound_.x - lower_bound_.x );
-	glm::vec3 position( 0, 0.9, -0.3 - std::abs(upper_bound_.z - lower_bound_.z) * 0.5f * scale);
-	glm::vec3 center = lower_bound_ + (upper_bound_ - lower_bound_) * 0.5f;
-
-	std::cout << "Lower bound " << lower_bound_.x << " " << lower_bound_.y << " " << lower_bound_.z << std::endl;
-	std::cout << "Upper bound " << upper_bound_.x << " " << upper_bound_.y << " " << upper_bound_.z << std::endl;
-	std::cout << "scale amount " << scale << std::endl;
-	std::cout << "center " << center.x << " " << center.y << " " << center.z << std::endl;
-
-	model_mat_ = glm::translate( model_mat_, position );
-	model_mat_ = glm::scale( model_mat_, glm::vec3( scale, scale, scale ) );
-	model_mat_ = glm::translate( model_mat_, -center );
+	resetPosition();
 
 	glGenVertexArrays( 1, &vao_ );
 	glGenBuffers( 1, &vbo_ );
@@ -184,5 +172,21 @@ void PointCloud::calculateAABB()
 	};
 
 	glBufferData( GL_ARRAY_BUFFER, sizeof( verts ), verts, GL_STATIC_DRAW );
+}
 
+void PointCloud::resetPosition()
+{
+	float scale = 0.6f / std::abs( upper_bound_.x - lower_bound_.x );
+	glm::vec3 position( 0, 0.9, -0.3 - std::abs( upper_bound_.z - lower_bound_.z ) * 0.5f * scale );
+	glm::vec3 center = lower_bound_ + (upper_bound_ - lower_bound_) * 0.5f;
+/*
+	std::cout << "Lower bound " << lower_bound_.x << " " << lower_bound_.y << " " << lower_bound_.z << std::endl;
+	std::cout << "Upper bound " << upper_bound_.x << " " << upper_bound_.y << " " << upper_bound_.z << std::endl;
+	std::cout << "scale amount " << scale << std::endl;
+	std::cout << "center " << center.x << " " << center.y << " " << center.z << std::endl;
+*/
+	model_mat_ = glm::mat4();
+	model_mat_ = glm::translate( model_mat_, position );
+	model_mat_ = glm::scale( model_mat_, glm::vec3( scale, scale, scale ) );
+	model_mat_ = glm::translate( model_mat_, -center );
 }

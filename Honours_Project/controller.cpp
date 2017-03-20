@@ -144,6 +144,19 @@ glm::vec2 Controller::axisDelta( vr::EVRButtonId button ) const
 	return current - prev;
 }
 
+glm::vec2 Controller::touchpadDelta() const
+{
+	if( axis( vr::k_EButton_SteamVR_Touchpad ) != glm::vec2( 0 ) &&
+		prevAxis( vr::k_EButton_SteamVR_Touchpad ) != glm::vec2( 0 ) )
+	{
+		return axisDelta( vr::k_EButton_SteamVR_Touchpad );
+	}
+	else
+	{
+		return glm::vec2( 0 );
+	}
+}
+
 glm::mat4 Controller::deviceToAbsoluteTracking() const
 {
 	return convertHMDmat3ToGLMMat4( pose_.mDeviceToAbsoluteTracking );
