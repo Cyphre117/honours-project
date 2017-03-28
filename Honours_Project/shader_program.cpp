@@ -18,6 +18,13 @@ vertex_shader_(0),
 fragment_shader_(0)
 {}
 
+void ShaderProgram::init( std::string vertex_file_path, std::string fragment_file_path )
+{
+	loadVertexSourceFile( vertex_file_path );
+	loadFragmentSourceFile( fragment_file_path );
+	init();
+}
+
 bool ShaderProgram::init()
 {
     bool success = true;

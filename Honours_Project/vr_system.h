@@ -5,6 +5,10 @@
 #include <GL/glew.h>
 #include "shader_program.h"
 #include "controller.h"
+#include "move_tool.h"
+#include "point_light_tool.h"
+
+class PointCloud;
 
 class VRSystem
 {
@@ -15,6 +19,7 @@ public:
 	void processVREvents();
 	void manageDevices();
 	void updatePoses();
+	void updateDevices( float dt );
 	void drawControllers( vr::EVREye eye );
 	void bindEyeTexture( vr::EVREye eye );
 	void blitEyeTextures();
@@ -26,7 +31,9 @@ public:
 	glm::mat4 projectionMartix( vr::Hmd_Eye eye );
 	glm::mat4 eyePoseMatrix( vr::Hmd_Eye eye );
 	glm::mat4 viewMatrix( vr::Hmd_Eye eye ) { return eyePoseMatrix( eye ) * deviceTransform( vr::k_unTrackedDeviceIndex_Hmd ); }
-	vr::IVRSystem* openVRVRSystem() { return vr_system_; };
+	vr::IVRSystem* openVRVRSystem() { return vr_system_; }
+	MoveTool* moveTool() { return &move_tool_; }
+	PointLightTool* pointLightTool() { return &point_light_tool_; }
 
 	// Returns NULL if the controller is not ready
 	Controller* leftControler() { return left_controller_.isInitialised() ? &left_controller_ : nullptr; }
@@ -47,17 +54,24 @@ private:
 
 	vr::IVRSystem* vr_system_;
 
+	vr::TrackedDevicePose_t poses_[vr::k_unMaxTrackedDeviceCount];
+	glm::mat4 transforms_[vr::k_unMaxTrackedDeviceCount];
+
+	// Controllers
+	Controller left_controller_;
+	Controller right_controller_;
+
+	// User tools
+	MoveTool move_tool_;
+	PointLightTool point_light_tool_;
+
+	// Controller rendering
 	ShaderProgram controller_shader_;
 	GLint controller_shader_modl_mat_locaton_;
 	GLint controller_shader_view_mat_locaton_;
 	GLint controller_shader_proj_mat_locaton_;
 
-	Controller left_controller_;
-	Controller right_controller_;
-
-	vr::TrackedDevicePose_t poses_[vr::k_unMaxTrackedDeviceCount];
-	glm::mat4 transforms_[vr::k_unMaxTrackedDeviceCount];
-
+	// VR rendering
 	uint32_t render_target_width_;
 	uint32_t render_target_height_;
 	float near_clip_plane_;

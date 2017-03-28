@@ -6,31 +6,29 @@
 #include "vr_system.h"
 
 PointCloud::PointCloud() :
+	active_shader_(nullptr),
 	vao_(0),
 	vbo_(0),
 	num_verts_(0),
-	aabb_vao_(0)
+	aabb_vao_(0),
+	model_mat_(1.0f),
+	offset_mat_(1.0f)
 {
 }
 
 PointCloud::~PointCloud()
 {
-
 }
 
 bool PointCloud::init()
 {
 	ply_loader_.load( "models/dragon_res2.ply", data_ );
 
-	shader_.loadVertexSourceFile( "colour_shader_vs.glsl" );
-	shader_.loadFragmentSourceFile( "colour_shader_fs.glsl" );
-	shader_.init();
+	modl_matrix_location_ = active_shader_->getUniformLocation( "model" );
+	view_matrix_location_ = active_shader_->getUniformLocation( "view" );
+	proj_matrix_location_ = active_shader_->getUniformLocation( "projection" );
 
-	modl_matrix_location_ = shader_.getUniformLocation( "model" );
-	view_matrix_location_ = shader_.getUniformLocation( "view" );
-	proj_matrix_location_ = shader_.getUniformLocation( "projection" );
-
-	shader_.bind();
+	active_shader_->bind();
 	calculateAABB();
 	resetPosition();
 
@@ -42,33 +40,20 @@ bool PointCloud::init()
 	GLuint stride = 2 * 3 * sizeof( GLfloat );
 	GLuint offset = 0;
 
-	GLint posAttrib = shader_.getAttribLocation( "vPosition" );
-	glEnableVertexAttribArray( posAttrib );
-	glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
+	glEnableVertexAttribArray( 0 );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
 
 	offset += sizeof( GLfloat ) * 3;
-	GLint colAttrib = shader_.getAttribLocation( "vColour" );
-	glEnableVertexAttribArray( colAttrib );
-	glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
-
-	/*
-	for( int i = 0; i < 500; i++ )
-	{
-		data.push_back( (std::rand() / (float)RAND_MAX) * 5.0f - 2.5f );
-		data.push_back( (std::rand() / (float)RAND_MAX) * 5.0f - 2.5f );
-		data.push_back( (std::rand() / (float)RAND_MAX) * 5.0f - 2.5f );
-		data.push_back( 1.0f );
-		data.push_back( 1.0f );
-		data.push_back( 1.0f );
-	}*/
+	glEnableVertexAttribArray( 1 );
+	glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
 
 	// Send the verticies
 	glBufferData( GL_ARRAY_BUFFER, sizeof( data_[0] ) * data_.size(), data_.data(), GL_STATIC_DRAW );
 	num_verts_ = (GLsizei)(data_.size() / 6);
 
 	glBindVertexArray( 0 );
-
-	return false;
+	
+	return true;
 }
 
 void PointCloud::render( vr::EVREye eye )
@@ -78,8 +63,8 @@ void PointCloud::render( vr::EVREye eye )
 	view_mat_ = system->viewMatrix( eye );
 	projection_mat_ = system->projectionMartix( eye );
 
-	shader_.bind();
-	glUniformMatrix4fv( modl_matrix_location_, 1, GL_FALSE, glm::value_ptr( model_mat_ ) );
+	active_shader_->bind();
+	glUniformMatrix4fv( modl_matrix_location_, 1, GL_FALSE, glm::value_ptr( model_mat_ * offset_mat_ ) );
 	glUniformMatrix4fv( view_matrix_location_, 1, GL_FALSE, glm::value_ptr( view_mat_ ) );
 	glUniformMatrix4fv( proj_matrix_location_, 1, GL_FALSE, glm::value_ptr( projection_mat_ ) );
 
@@ -111,7 +96,6 @@ void PointCloud::calculateAABB()
 
 	GLuint vbo;
 
-	shader_.bind();
 	glGenVertexArrays( 1, &aabb_vao_ );
 	glBindVertexArray( aabb_vao_ );
 	glGenBuffers( 1, &vbo );
@@ -120,14 +104,12 @@ void PointCloud::calculateAABB()
 	GLuint stride = 2 * 3 * sizeof( GLfloat );
 	GLuint offset = 0;
 
-	GLint posAttrib = shader_.getAttribLocation( "vPosition" );
-	glEnableVertexAttribArray( posAttrib );
-	glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
+	glEnableVertexAttribArray( 0 );
+	glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
 
 	offset += sizeof( GLfloat ) * 3;
-	GLint colAttrib = shader_.getAttribLocation( "vColour" );
-	glEnableVertexAttribArray( colAttrib );
-	glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
+	glEnableVertexAttribArray( 1 );
+	glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
 
 	// Construct a box around the point cloud
 	GLfloat verts[] = {

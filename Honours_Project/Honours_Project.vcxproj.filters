@@ -16,6 +16,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="tools">
+      <UniqueIdentifier>{2ef9290d-886e-4559-876b-2d0fcb12175f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -53,6 +56,15 @@
     </ClCompile>
     <ClCompile Include="imgui\imgui_draw.cpp">
       <Filter>libs\Dear Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="move_tool.cpp">
+      <Filter>tools</Filter>
+    </ClCompile>
+    <ClCompile Include="tool.cpp">
+      <Filter>tools</Filter>
+    </ClCompile>
+    <ClCompile Include="point_light_tool.cpp">
+      <Filter>tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -98,6 +110,15 @@
     <ClInclude Include="imgui\imconfig.h">
       <Filter>libs\Dear Imgui</Filter>
     </ClInclude>
+    <ClInclude Include="move_tool.h">
+      <Filter>tools</Filter>
+    </ClInclude>
+    <ClInclude Include="tool.h">
+      <Filter>tools</Filter>
+    </ClInclude>
+    <ClInclude Include="point_light_tool.h">
+      <Filter>tools</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\window_shader_fs.glsl">
@@ -119,6 +140,12 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\render_model_shader_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\point_light_shader_vs.glsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\point_light_shader_fs.glsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

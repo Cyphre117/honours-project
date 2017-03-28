@@ -9,6 +9,7 @@
 
 // Forward declarations
 class VRSystem;
+class VRTool;
 
 class Controller
 {
@@ -17,12 +18,13 @@ public:
 	~Controller();
 
 	void init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, const ShaderProgram& shader );
-	void update();
+	void update( float dt );
 	void draw();
 	void handleEvent( vr::VREvent_t event );
 
 	// Setters
 	void setPose( vr::TrackedDevicePose_t pose ) { pose_ = pose; }
+	void setActiveTool( VRTool* tool );
 
 	// Getters
 	bool isButtonDown( vr::EVRButtonId button ) const { return (state_.ulButtonPressed & vr::ButtonMaskFromId( button )) != 0; }
@@ -61,10 +63,12 @@ protected:
 	// Stores location and orientation information
 	vr::TrackedDevicePose_t pose_;
 
-	ShaderProgram* shader_;
-	//GLuint vao_;
-	GLuint model_mat_location_;
+	// Tool info
+	VRTool* active_tool_;
 
+	// Rendering Info
+	ShaderProgram* shader_;
+	GLuint model_mat_location_;
 	GLuint model_vao_;
 	GLuint model_vbo_;
 	GLuint model_ebo_;

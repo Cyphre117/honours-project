@@ -18,7 +18,7 @@
 //    works when clearing the resolve texture directly
 //    desn't seem to work when clearing the render texture and blitting to the resolve
 //
-// - get blitting from multisampled from non multisampled texture working
+// - get blitting from multisampled to non multisampled texture working
 
 void set_gl_attribs();
 void draw_gui();
@@ -30,6 +30,7 @@ int main(int argc, char** argv)
 	VRSystem* vr_system;
 	Scene scene;
 	PointCloud point_cloud;
+	ShaderProgram standard_shader;
 
 	bool running = true;
 	window = Window::get();
@@ -38,9 +39,13 @@ int main(int argc, char** argv)
 	if( !vr_system ) running = false;
 	ImGui::Init( window->SDLWindow() );
 
+	standard_shader.init( "colour_shader_vs.glsl", "colour_shader_fs.glsl" );
+
 	if( running )
 	{
 		scene.init();
+
+		point_cloud.setActiveShader( &standard_shader );
 		point_cloud.init();
 	}
 
@@ -63,6 +68,7 @@ int main(int argc, char** argv)
 		}
 
 		// Hand tool tester code
+		/*
 		if( vr_system->leftControler() )
 		{
 			if( vr_system->leftControler()->isButtonDown( vr::k_EButton_SteamVR_Trigger ) )
@@ -81,11 +87,18 @@ int main(int argc, char** argv)
 			{
 				point_cloud.resetPosition();
 			}
-		}
+		}*/
+
+		// TODO
+		// - movements are the wrong scale
+		// - rotation is not around the controller
+
+		point_cloud.setOffsetMatrix( vr_system->moveTool()->originTransform() );
 
 		vr_system->processVREvents();
 		vr_system->manageDevices();
 		vr_system->updatePoses();
+		vr_system->updateDevices( dt );
 
 		ImGui::Frame( window->SDLWindow(), vr_system );
 
@@ -148,6 +161,7 @@ void set_gl_attribs()
 
 void draw_gui()
 {
+	VRSystem* system = VRSystem::get();
 	ImGuiIO& IO = ImGui::GetIO();
 	IO.MouseDrawCursor = true;
 
@@ -161,4 +175,9 @@ void draw_gui()
 		ImGui::Text( "Touchpad Delta: (%.2f, %.2f)", controller->touchpadDelta().x, controller->touchpadDelta().y );
 		ImGui::Text( "Trigger: %s", controller->isButtonDown( vr::k_EButton_SteamVR_Trigger ) ? "YES" : "NO" );
 	}
+
+	ImGui::Text( "Translation: %f %f %f", system->moveTool()->translation().x, system->moveTool()->translation().y, system->moveTool()->translation().z );
+	ImGui::Text( "Rotation: %f %f %f", system->moveTool()->rotation().x, system->moveTool()->rotation().y, system->moveTool()->rotation().z );
+
+	ImGui::Text( "Point light position: %f %f %f", system->pointLightTool()->lightPos().x, system->pointLightTool()->lightPos().y, system->pointLightTool()->lightPos().z );
 }

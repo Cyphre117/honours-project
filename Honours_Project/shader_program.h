@@ -13,6 +13,7 @@ public:
 	~ShaderProgram() {}
 
 	// Returns true if shader compilation was a success, false if there was an error
+	void init( std::string vertex_file_path, std::string fragment_file_path );
 	bool init();
 	void shutdown();
 

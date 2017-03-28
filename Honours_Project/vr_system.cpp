@@ -181,11 +181,9 @@ void VRSystem::manageDevices()
 		if( left_index != -1 )
 		{
 			left_controller_.init( left_index, this, controller_shader_ );
+			left_controller_.setActiveTool( &move_tool_ );
+			std::cout << "Left controller initialised!" << std::endl;
 		}
-	}
-	else
-	{
-		left_controller_.update();
 	}
 
 	// Init the right controller if it hasn't been initialised already
@@ -195,11 +193,9 @@ void VRSystem::manageDevices()
 		if( right_index != -1 )
 		{
 			right_controller_.init( right_index, this, controller_shader_ );
+			right_controller_.setActiveTool( &point_light_tool_ );
+			std::cout << "Right controller initialised!" << std::endl;
 		}
-	}
-	else
-	{
-		right_controller_.update();
 	}
 }
 
@@ -221,6 +217,12 @@ void VRSystem::updatePoses()
 			if( right_controller_.index() == device_index ) right_controller_.setPose( poses_[device_index] );
 		}
 	}
+}
+
+void VRSystem::updateDevices( float dt )
+{
+	if( left_controller_.isInitialised() ) left_controller_.update( dt );
+	if( right_controller_.isInitialised() ) right_controller_.update( dt );
 }
 
 void VRSystem::drawControllers( vr::EVREye eye )

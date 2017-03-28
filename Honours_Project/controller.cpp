@@ -1,14 +1,15 @@
 #include "controller.h"
 #include "helpers.h"
 #include "vr_system.h"
+#include "tool.h"
 #include <iostream>
 #include <vector>
 
 Controller::Controller() :
 	initialised_( false ),
 	vr_system_( nullptr ),
+	active_tool_( nullptr ),
 	shader_( nullptr ),
-	//vao_( 0 ),
 	model_mat_location_( 0 ),
 	index_( vr::k_unTrackedDeviceIndexInvalid ),
 	model_vao_( 0 ),
@@ -29,41 +30,9 @@ void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, cons
 	index_ = index;
 
 	initialised_ = true;
-	std::cout << "controller " << index << " initialised!" << std::endl;
-
-	//GLfloat verts[] = {
-	//	0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-	//	0.2f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-	//
-	//	0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f,
-	//	0.0f, 0.2f, 0.0f, 0.0f, 1.0f, 0.0f,
-	//
-	//	0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f,
-	//	0.0f, 0.0f, 0.2f, 0.0f, 0.0f, 1.0f,
-	//};
+	//std::cout << "controller " << index << " initialised!" << std::endl;
 
 	shader.bind();
-	//glGenVertexArrays( 1, &vao_ );
-	//glBindVertexArray( vao_ );
-
-	//GLuint vbo;
-	//glGenBuffers( 1, &vbo );
-	//glBindBuffer( GL_ARRAY_BUFFER, vbo );
-	//glBufferData( GL_ARRAY_BUFFER, sizeof( verts ), verts, GL_STATIC_DRAW );
-
-	//GLuint stride = 2 * 3 * sizeof( GLfloat );
-	//GLuint offset = 0;
-
-	//GLint posAttrib = shader.getAttribLocation( "vPosition" );
-	//glEnableVertexAttribArray( posAttrib );
-	//glVertexAttribPointer( posAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offset );
-
-	//offset += sizeof( GLfloat ) * 3;
-	//GLint colAttrib = shader.getAttribLocation( "vColour" );
-	//glEnableVertexAttribArray( colAttrib );
-	//glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void*)offset );
-
-	//glBindVertexArray( 0 );
 
 	// Setup render models
 	vr::RenderModel_t* vr_model = nullptr;
@@ -124,7 +93,6 @@ void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, cons
 		glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, vNormal ) );
 		glEnableVertexAttribArray( 2 );
 		glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, rfTextureCoord ) );
-	
 
 		glGenerateMipmap( GL_TEXTURE_2D );
 
@@ -145,7 +113,7 @@ void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, cons
 	glUseProgram( 0 );
 }
 
-void Controller::update()
+void Controller::update( float dt )
 {
 	if( initialised_ )
 	{
@@ -154,27 +122,18 @@ void Controller::update()
 
 		// Update the current controller state and pose
 		vr_system_->GetControllerState( index_, &state_, sizeof( state_ ) );
-
-		/*
-		// The pos given from this function is accurate at the time the state was generated, i think...
-		// It definately feels laggier than the one passed from WaitGetPoses()
-		hmd_->GetControllerStateWithPose(
-		vr::TrackingUniverseOrigin::TrackingUniverseStanding,
-		index_,
-		&state_, sizeof( state_ ),
-		&pose_ );
-		*/
+ 
+		if( active_tool_ )
+		{
+			active_tool_->update( dt );
+		}
 	}
 }
 
 void Controller::draw()
 {
-	//glBindVertexArray( vao_ );
-	//glDrawArrays( GL_LINES, 0, 6 );
-
 	glBindTexture( GL_TEXTURE_2D, model_texture_ );
 	glBindVertexArray( model_vao_ );
-	//glDrawArrays( GL_POINTS, 0, model_num_verts_ );
 	glDrawElements( GL_TRIANGLES, model_num_verts_, GL_UNSIGNED_SHORT, 0 );
 }
 
@@ -191,6 +150,33 @@ void Controller::handleEvent( vr::VREvent_t event )
 	case vr::EVREventType::VREvent_ButtonPress: break;
 	case vr::EVREventType::VREvent_ButtonUnpress: break;
 	default: break;
+	}
+}
+
+void Controller::setActiveTool( VRTool* tool )
+{
+	// deactivate the currently active tool if there is one
+	if( active_tool_ )
+	{
+		active_tool_->deactivate();
+	}
+
+	// Switch the active tool
+	active_tool_ = tool;
+
+	// Activate the new tool
+	if( active_tool_ )
+	{
+		active_tool_->setVRSystem( VRSystem::get() );
+		active_tool_->setController( this );
+
+		// Initialise it if this is the first use
+		if( !active_tool_->isInitialised() )
+		{
+			active_tool_->init();
+		}
+
+		active_tool_->activate();
 	}
 }
 
