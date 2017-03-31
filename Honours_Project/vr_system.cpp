@@ -193,6 +193,7 @@ void VRSystem::manageDevices()
 		if( right_index != -1 )
 		{
 			right_controller_.init( right_index, this, controller_shader_ );
+			right_controller_.setActiveTool( &pointer_tool_ );
 			right_controller_.setActiveTool( &point_light_tool_ );
 			std::cout << "Right controller initialised!" << std::endl;
 		}
@@ -222,7 +223,23 @@ void VRSystem::updatePoses()
 void VRSystem::updateDevices( float dt )
 {
 	if( left_controller_.isInitialised() ) left_controller_.update( dt );
-	if( right_controller_.isInitialised() ) right_controller_.update( dt );
+	if( right_controller_.isInitialised() )
+	{
+		right_controller_.update( dt );
+
+		// While the pointer tool is not 'active' it is always accissible
+		// This reveals a desing flaw in the way my controllers + tools were designed but i'll ignore it for now...
+		pointer_tool_.update( dt );
+	}
+}
+
+void VRSystem::render( vr::EVREye eye )
+{
+	drawControllers( eye );
+
+	if( move_tool_.isInitialised() ) move_tool_.render( eye );
+	if( pointer_tool_.isInitialised() ) pointer_tool_.render( eye );
+	if( point_light_tool_.isInitialised() ) point_light_tool_.render( eye );
 }
 
 void VRSystem::drawControllers( vr::EVREye eye )

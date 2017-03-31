@@ -66,6 +66,9 @@
     <ClCompile Include="point_light_tool.cpp">
       <Filter>tools</Filter>
     </ClCompile>
+    <ClCompile Include="pointer_tool.cpp">
+      <Filter>tools</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="window.h">
@@ -117,6 +120,9 @@
       <Filter>tools</Filter>
     </ClInclude>
     <ClInclude Include="point_light_tool.h">
+      <Filter>tools</Filter>
+    </ClInclude>
+    <ClInclude Include="pointer_tool.h">
       <Filter>tools</Filter>
     </ClInclude>
   </ItemGroup>

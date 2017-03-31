@@ -1,0 +1,32 @@
+#pragma once
+
+#include "tool.h"
+#include "GL/glew.h"
+
+// TODO:
+// - render a line coming out of the controller when the touchpad is pressed
+// - change pointer length depending on finder position on the touchpad
+
+class PointerTool : public VRTool
+{
+public:
+	PointerTool();
+	~PointerTool();
+
+	bool init() override;
+	void shutdown() override;
+
+	void activate() override;
+	void deactivate() override;
+	void update( float dt ) override;
+	void render( vr::EVREye eye ) override;
+
+protected:
+
+	GLuint vao_ = 0;
+	GLuint vbo_ = 0;
+	GLsizei num_verts_ = 0;
+	GLint shader_view_mat_location_ = 0;
+	GLint shader_proj_mat_location_ = 0;
+	GLint shader_modl_mat_location_ = 0;
+};

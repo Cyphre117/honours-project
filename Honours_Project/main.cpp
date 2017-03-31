@@ -19,6 +19,8 @@
 //    desn't seem to work when clearing the render texture and blitting to the resolve
 //
 // - get blitting from multisampled to non multisampled texture working
+// - hand tool movements are the wrong scale
+// - hand tool rotation is not around the controller
 
 void set_gl_attribs();
 void draw_gui();
@@ -31,7 +33,9 @@ int main(int argc, char** argv)
 	Scene scene;
 	PointCloud point_cloud;
 	ShaderProgram standard_shader;
+	ShaderProgram point_light_shader;
 
+	// First stage initialisation
 	bool running = true;
 	window = Window::get();
 	if( !window ) running = false;
@@ -39,10 +43,19 @@ int main(int argc, char** argv)
 	if( !vr_system ) running = false;
 	ImGui::Init( window->SDLWindow() );
 
-	standard_shader.init( "colour_shader_vs.glsl", "colour_shader_fs.glsl" );
-
+	// Second stage initialisation
 	if( running )
 	{
+		// Shaders
+		standard_shader.init( "colour_shader_vs.glsl", "colour_shader_fs.glsl" );
+		point_light_shader.init( "point_light_shader_vs.glsl", "point_light_shader_fs.glsl" );
+		
+		// Tools
+		vr_system->pointLightTool()->setTargetShader( point_cloud.activeShaderAddr() );
+		vr_system->pointLightTool()->setDeactivateShader( &standard_shader );
+		vr_system->pointLightTool()->setActivateShader( &point_light_shader );
+		vr_system->pointerTool()->setShader( &standard_shader );
+
 		scene.init();
 
 		point_cloud.setActiveShader( &standard_shader );
@@ -89,10 +102,6 @@ int main(int argc, char** argv)
 			}
 		}*/
 
-		// TODO
-		// - movements are the wrong scale
-		// - rotation is not around the controller
-
 		point_cloud.setOffsetMatrix( vr_system->moveTool()->originTransform() );
 
 		vr_system->processVREvents();
@@ -115,7 +124,7 @@ int main(int argc, char** argv)
 
 		scene.render( vr::Eye_Left );
 		point_cloud.render( vr::Eye_Left );
-		vr_system->drawControllers( vr::Eye_Left );
+		vr_system->render( vr::Eye_Left );
 
 		draw_gui();
 		ImGui::Render();
@@ -129,7 +138,7 @@ int main(int argc, char** argv)
 
 		scene.render( vr::Eye_Right );
 		point_cloud.render( vr::Eye_Right );
-		vr_system->drawControllers( vr::Eye_Right );
+		vr_system->render( vr::Eye_Right );
 
 		vr_system->blitEyeTextures();
 		vr_system->submitEyeTextures();

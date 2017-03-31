@@ -159,6 +159,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="move_tool.cpp" />
     <ClCompile Include="ply_loader.cpp" />
+    <ClCompile Include="pointer_tool.cpp" />
     <ClCompile Include="point_cloud.cpp" />
     <ClCompile Include="point_light_tool.cpp" />
     <ClCompile Include="scene.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="imgui\stb_truetype.h" />
     <ClInclude Include="move_tool.h" />
     <ClInclude Include="ply_loader.h" />
+    <ClInclude Include="pointer_tool.h" />
     <ClInclude Include="point_cloud.h" />
     <ClInclude Include="point_light_tool.h" />
     <ClInclude Include="scene.h" />

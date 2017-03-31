@@ -17,6 +17,7 @@ public:
 	void activate() override;
 	void deactivate() override;
 	void update( float dt ) override;
+	void render( vr::EVREye eye ) override {}
 
 	// Getters
 	glm::mat4 originTransform() const { return glm::translate( glm::mat4(), translation_) * glm::rotate( glm::mat4(), glm::length( rotation_ ), rotation_ ); }

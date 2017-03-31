@@ -11,8 +11,8 @@ PointCloud::PointCloud() :
 	vbo_(0),
 	num_verts_(0),
 	aabb_vao_(0),
-	model_mat_(1.0f),
-	offset_mat_(1.0f)
+	model_mat_(),
+	offset_mat_()
 {
 }
 
@@ -28,7 +28,6 @@ bool PointCloud::init()
 	view_matrix_location_ = active_shader_->getUniformLocation( "view" );
 	proj_matrix_location_ = active_shader_->getUniformLocation( "projection" );
 
-	active_shader_->bind();
 	calculateAABB();
 	resetPosition();
 

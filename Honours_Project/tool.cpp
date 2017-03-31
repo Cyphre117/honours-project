@@ -3,6 +3,7 @@
 VRTool::VRTool( VRToolType type ) :
 	vr_system_(nullptr),
 	controller_(nullptr),
+	shader_(nullptr),
 	type_(type),
 	initialised_(false),
 	active_(false)
