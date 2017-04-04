@@ -69,6 +69,9 @@
     <ClCompile Include="pointer_tool.cpp">
       <Filter>VR Tools</Filter>
     </ClCompile>
+    <ClCompile Include="sphere.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="window.h">
@@ -124,6 +127,9 @@
     </ClInclude>
     <ClInclude Include="pointer_tool.h">
       <Filter>VR Tools</Filter>
+    </ClInclude>
+    <ClInclude Include="sphere.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -25,7 +25,11 @@ bool Scene::init()
 	modl_matrix_location_ = shader_.getUniformLocation( "model" );
 	view_matrix_location_ = shader_.getUniformLocation( "view" );
 	proj_matrix_location_ = shader_.getUniformLocation( "projection" );
-		
+	
+	// Setup objects
+	sphere_.setShader( &shader_ );
+	sphere_.init();
+
 	// Create circular floor grid
 	{
 		std::vector<GLfloat> verts;
@@ -114,7 +118,18 @@ void Scene::shutdown()
 	floor_vao_ = 0;
 }
 
+void Scene::update( float dt )
+{
+	sphere_.update( dt );
+}
+
 void Scene::render( vr::EVREye eye )
+{
+	sphere_.render( eye );
+	render_floor( eye );
+}
+
+void Scene::render_floor( vr::EVREye eye )
 {
 	shader_.bind();
 

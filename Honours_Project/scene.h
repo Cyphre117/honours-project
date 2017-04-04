@@ -4,6 +4,7 @@
 #include <glm.hpp>
 #include <openvr.h>
 #include "shader_program.h"
+#include "sphere.h"
 
 // Forward declarations
 class Window;
@@ -17,6 +18,7 @@ public:
 
 	bool init();
 	void shutdown();
+	void update( float dt );
 	void render( vr::EVREye eye );
 
 protected:
@@ -31,6 +33,10 @@ protected:
 	glm::mat4 view_mat_;
 	glm::mat4 projection_mat_;
 
+	void render_floor( vr::EVREye eye );
+
 	GLuint floor_vao_;
 	GLsizei num_floor_verts_;
+
+	Sphere sphere_;
 };

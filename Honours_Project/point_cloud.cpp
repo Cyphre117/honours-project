@@ -24,14 +24,9 @@ PointCloud::~PointCloud()
 
 bool PointCloud::init()
 {
-	ply_loader_.load( "models/dragon_res2.ply", data_ );
-
 	modl_matrix_location_ = active_shader_->getUniformLocation( "model" );
 	view_matrix_location_ = active_shader_->getUniformLocation( "view" );
 	proj_matrix_location_ = active_shader_->getUniformLocation( "projection" );
-
-	calculateAABB();
-	resetPosition();
 
 	glGenVertexArrays( 1, &vao_ );
 	glGenBuffers( 1, &vbo_ );
@@ -48,9 +43,7 @@ bool PointCloud::init()
 	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
 
-	// Send the verticies
-	glBufferData( GL_ARRAY_BUFFER, sizeof( data_[0] ) * data_.size(), data_.data(), GL_STATIC_DRAW );
-	num_verts_ = (GLsizei)(data_.size() / 6);
+	//loadFile( "models/dragon_res2.ply" );
 
 	glBindVertexArray( 0 );
 	
@@ -156,6 +149,22 @@ void PointCloud::calculateAABB()
 	};
 
 	glBufferData( GL_ARRAY_BUFFER, sizeof( verts ), verts, GL_STATIC_DRAW );
+}
+
+void PointCloud::loadFile( std::string filepath )
+{
+	glBindVertexArray( vao_ );
+	glBindBuffer( GL_ARRAY_BUFFER, vbo_ );
+
+	// Load the data
+	ply_loader_.load( filepath, data_ );
+
+	// Send the verticies
+	glBufferData( GL_ARRAY_BUFFER, sizeof( data_[0] ) * data_.size(), data_.data(), GL_STATIC_DRAW );
+	num_verts_ = (GLsizei)(data_.size() / 6);
+
+	calculateAABB();
+	resetPosition();
 }
 
 void PointCloud::resetPosition()

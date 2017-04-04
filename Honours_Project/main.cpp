@@ -65,6 +65,7 @@ int main(int argc, char** argv)
 		point_cloud.setActiveShader( &standard_shader );
 		point_cloud.setMoveTool( vr_system->moveTool() );
 		point_cloud.init();
+		point_cloud.loadFile( "models/dragon_res2.ply" );
 	}
 
 	float dt = 0.0;
@@ -114,6 +115,7 @@ int main(int argc, char** argv)
 		vr_system->updatePoses();
 		vr_system->updateDevices( dt );
 
+		scene.update( dt );
 		ImGui::Frame( window->SDLWindow(), vr_system );
 
 		if( render_mode == RenderMode::VR )

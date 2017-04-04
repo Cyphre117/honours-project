@@ -16,6 +16,7 @@ public:
 	bool init();
 	void render( vr::EVREye eye );
 	void resetPosition();
+	void loadFile( std::string filepath );
 
 	// Getters
 	inline glm::mat4 modelMatrix() { return model_mat_; }
