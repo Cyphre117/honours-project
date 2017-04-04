@@ -16,7 +16,7 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="tools">
+    <Filter Include="VR Tools">
       <UniqueIdentifier>{2ef9290d-886e-4559-876b-2d0fcb12175f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -58,16 +58,16 @@
       <Filter>libs\Dear Imgui</Filter>
     </ClCompile>
     <ClCompile Include="move_tool.cpp">
-      <Filter>tools</Filter>
+      <Filter>VR Tools</Filter>
     </ClCompile>
     <ClCompile Include="tool.cpp">
-      <Filter>tools</Filter>
+      <Filter>VR Tools</Filter>
     </ClCompile>
     <ClCompile Include="point_light_tool.cpp">
-      <Filter>tools</Filter>
+      <Filter>VR Tools</Filter>
     </ClCompile>
     <ClCompile Include="pointer_tool.cpp">
-      <Filter>tools</Filter>
+      <Filter>VR Tools</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -114,16 +114,16 @@
       <Filter>libs\Dear Imgui</Filter>
     </ClInclude>
     <ClInclude Include="move_tool.h">
-      <Filter>tools</Filter>
+      <Filter>VR Tools</Filter>
     </ClInclude>
     <ClInclude Include="tool.h">
-      <Filter>tools</Filter>
+      <Filter>VR Tools</Filter>
     </ClInclude>
     <ClInclude Include="point_light_tool.h">
-      <Filter>tools</Filter>
+      <Filter>VR Tools</Filter>
     </ClInclude>
     <ClInclude Include="pointer_tool.h">
-      <Filter>tools</Filter>
+      <Filter>VR Tools</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

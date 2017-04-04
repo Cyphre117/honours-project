@@ -59,6 +59,7 @@ int main(int argc, char** argv)
 		scene.init();
 
 		point_cloud.setActiveShader( &standard_shader );
+		point_cloud.setMoveTool( vr_system->moveTool() );
 		point_cloud.init();
 	}
 
@@ -102,7 +103,7 @@ int main(int argc, char** argv)
 			}
 		}*/
 
-		point_cloud.setOffsetMatrix( vr_system->moveTool()->originTransform() );
+		//point_cloud.setOffsetMatrix( vr_system->moveTool()->originTransform() );
 
 		vr_system->processVREvents();
 		vr_system->manageDevices();
@@ -126,8 +127,8 @@ int main(int argc, char** argv)
 		point_cloud.render( vr::Eye_Left );
 		vr_system->render( vr::Eye_Left );
 
-		draw_gui();
-		ImGui::Render();
+		//draw_gui();
+		//ImGui::Render();
 
 		vr_system->bindEyeTexture( vr::Eye_Right );
 		//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Right ) );
@@ -143,7 +144,7 @@ int main(int argc, char** argv)
 		vr_system->blitEyeTextures();
 		vr_system->submitEyeTextures();
 		
-		window->render( vr_system->renderEyeTexture( vr::Eye_Left ), vr_system->renderEyeTexture( vr::Eye_Right ) );
+		window->render( vr_system->resolveEyeTexture( vr::Eye_Left ), vr_system->resolveEyeTexture( vr::Eye_Right ) );
 		window->present();
 
 		// Update dt
@@ -188,5 +189,5 @@ void draw_gui()
 	ImGui::Text( "Translation: %f %f %f", system->moveTool()->translation().x, system->moveTool()->translation().y, system->moveTool()->translation().z );
 	ImGui::Text( "Rotation: %f %f %f", system->moveTool()->rotation().x, system->moveTool()->rotation().y, system->moveTool()->rotation().z );
 
-	ImGui::Text( "Point light position: %f %f %f", system->pointLightTool()->lightPos().x, system->pointLightTool()->lightPos().y, system->pointLightTool()->lightPos().z );
+	ImGui::Text( "Point light position: %.3f %.3f %.3f", system->pointLightTool()->lightPos().x, system->pointLightTool()->lightPos().y, system->pointLightTool()->lightPos().z );
 }

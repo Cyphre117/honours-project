@@ -4,7 +4,6 @@
 #include "glm.hpp"
 #include "gtc/matrix_transform.hpp"
 
-
 class MoveTool : public VRTool
 {
 public:
@@ -20,7 +19,8 @@ public:
 	void render( vr::EVREye eye ) override {}
 
 	// Getters
-	glm::mat4 originTransform() const { return glm::translate( glm::mat4(), translation_) * glm::rotate( glm::mat4(), glm::length( rotation_ ), rotation_ ); }
+	glm::mat4 translationMatrix() const { return glm::translate( glm::mat4(), translation_ ); }
+	glm::mat4 rotationMatrix() const { return glm::rotate( glm::mat4(), glm::length( rotation_ ), rotation_ ); }
 	glm::vec3 translation() const { return translation_; }
 	glm::vec3 rotation() const { return rotation_; }
 

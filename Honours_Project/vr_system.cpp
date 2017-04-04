@@ -99,18 +99,18 @@ bool VRSystem::init()
 		glBindFramebuffer( GL_FRAMEBUFFER, eye_buffers_[i].render_frame_buffer );			// Bind the FBO
 		// Attach colour component
 		glGenTextures( 1, &eye_buffers_[i].render_texture );																				// Generate a colour texture
-		glBindTexture( GL_TEXTURE_2D, eye_buffers_[i].render_texture );																		// Bind the texture
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );			// Create texture data
-		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eye_buffers_[i].render_texture, 0 );					// Attach the texture to the bound FBO
-		//glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture );															// Bind the multisampled texture
-		//glTexImage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA8, render_target_width_, render_target_height_, true );				// Create multisampled data
-		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture, 0 );		// Attach the multisampled texture to the bound FBO
+		//glBindTexture( GL_TEXTURE_2D, eye_buffers_[i].render_texture );																		// Bind the texture
+		//glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );			// Create texture data
+		//glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eye_buffers_[i].render_texture, 0 );					// Attach the texture to the bound FBO
+		glBindTexture( GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture );															// Bind the multisampled texture
+		glTexImage2DMultisample( GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGBA8, render_target_width_, render_target_height_, true );				// Create multisampled data
+		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, eye_buffers_[i].render_texture, 0 );		// Attach the multisampled texture to the bound FBO
 
 		// Attach depth component
 		glGenRenderbuffers( 1, &eye_buffers_[i].render_depth );																				// Generate a render buffer
 		glBindRenderbuffer( GL_RENDERBUFFER, eye_buffers_[i].render_depth );																// Bind the render buffer
-		//glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );			// Enable multisampling
-		glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );
+		glRenderbufferStorageMultisample( GL_RENDERBUFFER, 4, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );			// Enable multisampling
+		//glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );
 		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, eye_buffers_[i].render_depth );			// Attach the the render buffer as a depth buffer 
 
 		// Check everything went OK
@@ -126,9 +126,17 @@ bool VRSystem::init()
 		glGenTextures( 1, &eye_buffers_[i].resolve_texture );
 		glBindTexture( GL_TEXTURE_2D, eye_buffers_[i].resolve_texture );
 		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0 );
-		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0 );
+		glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, GL_LINEAR );
+		glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA8, render_target_width_, render_target_height_, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr );
 		glFramebufferTexture2D( GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, eye_buffers_[i].resolve_texture, 0 );
+
+		// TODO: this is only needed because i'm rendering directly to the resolve texture
+		//       I should fix it so i render to the multisampled the blit to this, then i can remove this depth component
+		// Attach depth component
+		glGenRenderbuffers( 1, &eye_buffers_[i].render_depth );																				// Generate a render buffer
+		glBindRenderbuffer( GL_RENDERBUFFER, eye_buffers_[i].render_depth );																// Bind the render buffer
+		glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT, render_target_width_, render_target_height_ );
+		glFramebufferRenderbuffer( GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, eye_buffers_[i].render_depth );			// Attach the the render buffer as a depth buffer 
 
 		// Check everything went OK
 		if( glCheckFramebufferStatus( GL_FRAMEBUFFER ) != GL_FRAMEBUFFER_COMPLETE )	{
@@ -262,10 +270,11 @@ void VRSystem::drawControllers( vr::EVREye eye )
 
 void VRSystem::bindEyeTexture( vr::EVREye eye )
 {
-	glBindFramebuffer( GL_FRAMEBUFFER, renderEyeTexture(eye) );
-	glViewport( 0, 0, render_target_width_, render_target_height_ );
 	glEnable( GL_MULTISAMPLE );
-	glEnable( GL_DEPTH );
+	glEnable( GL_DEPTH_TEST );
+	// TODO: this should be binding the renderEyeTexture instead
+	glBindFramebuffer( GL_FRAMEBUFFER, resolveEyeTexture(eye) );
+	glViewport( 0, 0, render_target_width_, render_target_height_ );
 }
 
 void VRSystem::blitEyeTextures()
@@ -290,15 +299,11 @@ void VRSystem::submitEyeTextures()
 		// NOTE: to find out what the error codes mean Ctal+F 'enum EVRCompositorError' in 'openvr.h'
 		vr::EVRCompositorError error = vr::VRCompositorError_None;
 
-		// TODO: switch these back to sending the resolve texture instead
-
-		vr::Texture_t left = { (void*)eye_buffers_[0].render_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
-		//vr::Texture_t left = { (void*)eye_buffers_[0].resolve_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+		vr::Texture_t left = { (void*)eye_buffers_[0].resolve_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 		error = vr::VRCompositor()->Submit( vr::Eye_Left, &left, NULL );
 		if( error != vr::VRCompositorError_None ) std::cout << "ERROR: left eye  " << error << std::endl;
 
-		vr::Texture_t right = { (void*)eye_buffers_[1].render_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
-		//vr::Texture_t right = { (void*)eye_buffers_[1].resolve_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+		vr::Texture_t right = { (void*)eye_buffers_[1].resolve_texture, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 		error = vr::VRCompositor()->Submit( vr::Eye_Right, &right, NULL );
 		if( error != vr::VRCompositorError_None ) std::cout << "ERROR: right eye " << error << std::endl;
 
@@ -318,6 +323,7 @@ glm::mat4 VRSystem::eyePoseMatrix( vr::Hmd_Eye eye )
 	vr::HmdMatrix34_t matrix = vr_system_->GetEyeToHeadTransform( eye );
 	return glm::inverse( convertHMDmat3ToGLMMat4( matrix ) );
 }
+
 std::string VRSystem::getDeviceString(
 	vr::TrackedDeviceIndex_t device,
 	vr::TrackedDeviceProperty prop,

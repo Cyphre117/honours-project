@@ -5,6 +5,8 @@
 #include <openvr.h>
 #include "ply_loader.h"
 
+class MoveTool;
+
 class PointCloud
 {
 public:
@@ -22,6 +24,7 @@ public:
 	inline ShaderProgram** activeShaderAddr() { return &active_shader_; }
 
 	// Setters
+	void setMoveTool( MoveTool* move_tool ) { move_tool_ = move_tool; }
 	void setOffsetMatrix( glm::mat4 offset ) { offset_mat_ = offset; }
 	void setModelMatrix( const glm::mat4& model ) { model_mat_ = model; }
 	void setActiveShader( ShaderProgram* shader ) { active_shader_ = shader; }
@@ -32,6 +35,7 @@ protected:
 	std::vector<GLfloat> data_;
 
 	ShaderProgram* active_shader_;
+	MoveTool* move_tool_;
 
 	GLint modl_matrix_location_;
 	GLint view_matrix_location_;

@@ -3,6 +3,7 @@
 #include "vr_system.h"
 #include <glm.hpp>
 #include <gtc/type_ptr.hpp>
+#include <vector>
 
 PointerTool::PointerTool() :
 	VRTool( VRToolType::Pointer )
@@ -66,17 +67,55 @@ void PointerTool::update( float dt )
 {
 	if( controller_->isButtonDown( vr::k_EButton_SteamVR_Touchpad ) )
 	{
-		float length = -0.8 + -0.6 * controller_->axis( vr::k_EButton_Axis0 ).y;
+		float length = -0.45 + -0.4 * controller_->axis( vr::k_EButton_Axis0 ).y;
 
-		GLfloat verts[] = {
+		std::vector<GLfloat> verts = {
 			0,0,0, 1,1,1,
 			0,0,length, 1,0,1
 		};
 
-		// TODO: have a little circle at the end of the pointer
+		// create the 3d cursor
+		const int segments = 12;
+		const float radius = 0.01f;
+		const float incr = 6.283f / (float)segments;
+		for( int i = 0; i < segments; i++ )
+		{
+			// first circle
+			verts.push_back( std::sin(incr * i) * radius );
+			verts.push_back( std::cos(incr * i) * radius );
+			verts.push_back( length );
+			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
 
-		glBufferData( GL_ARRAY_BUFFER, sizeof( verts ), verts, GL_STREAM_DRAW );
-		num_verts_ = (sizeof( verts ) / sizeof( verts[0] )) / 6;
+			verts.push_back( std::sin( incr * (i + 1) ) * radius );
+			verts.push_back( std::cos( incr * (i + 1) ) * radius );
+			verts.push_back( length );
+			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
+
+			// second circle
+			verts.push_back( std::sin( incr * i ) * radius );
+			verts.push_back( 0.0f );
+			verts.push_back( length + std::cos( incr * i ) * radius );
+			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
+
+			verts.push_back( std::sin( incr * (i + 1) ) * radius );
+			verts.push_back( 0.0f );
+			verts.push_back( length + std::cos( incr * (i + 1) ) * radius );
+			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
+
+			// third circle
+			verts.push_back( 0.0f );
+			verts.push_back( std::sin( incr * i ) * radius );
+			verts.push_back( length + std::cos( incr * i ) * radius );
+			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
+
+			verts.push_back( 0.0f );
+			verts.push_back( std::sin( incr * (i + 1) ) * radius );
+			verts.push_back( length + std::cos( incr * (i + 1) ) * radius );
+			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
+		}
+
+		glBufferData( GL_ARRAY_BUFFER, sizeof( verts[0] ) * verts.size(), verts.data(), GL_STREAM_DRAW );
+		num_verts_ = verts.size() / 6;
 	}
 	else
 	{
