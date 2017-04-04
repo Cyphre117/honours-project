@@ -9,8 +9,8 @@ Window* Window::self_ = nullptr;
 Window::Window() :
 	win_(nullptr),
 	gl_context_(nullptr),
-	width_(1280),
-	height_(640)
+	width_(1920),
+	height_(1080)
 {
 }
 

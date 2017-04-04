@@ -20,9 +20,12 @@ public:
 
 	// Getters
 	glm::mat4 translationMatrix() const { return glm::translate( glm::mat4(), translation_ ); }
-	glm::mat4 rotationMatrix() const { return glm::rotate( glm::mat4(), glm::length( rotation_ ), rotation_ ); }
+	glm::mat4 rotationMatrix() const { return rotation_ == glm::vec3(0) ? glm::mat4() : glm::rotate( glm::mat4(), glm::length( rotation_ ), rotation_ ); }
 	glm::vec3 translation() const { return translation_; }
 	glm::vec3 rotation() const { return rotation_; }
+
+	// Setters
+	void resetTransform() { translation_ = glm::vec3(); rotation_ = glm::vec3(); }
 
 protected:
 	glm::vec3 translation_;

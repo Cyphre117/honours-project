@@ -50,6 +50,9 @@ public:
 	inline GLuint renderEyeTexture( vr::Hmd_Eye eye ) { return eye_buffers_[(eye == vr::Eye_Left ? 0 : 1)].render_frame_buffer; }
 	inline GLuint resolveEyeTexture( vr::Hmd_Eye eye ) { return eye_buffers_[(eye == vr::Eye_Left ? 0 : 1)].resolve_frame_buffer; }
 
+	/* SETTERS */
+	void setPointCloud( PointCloud* point_cloud ) { point_cloud_ = point_cloud; }
+
 private:
 	// Singleton variables
 	VRSystem();
@@ -62,6 +65,8 @@ private:
 	void drawControllers( vr::EVREye eye );
 
 	/* MEMBER VARIBALES */
+	PointCloud* point_cloud_;
+
 	vr::TrackedDevicePose_t poses_[vr::k_unMaxTrackedDeviceCount];
 	glm::mat4 transforms_[vr::k_unMaxTrackedDeviceCount];
 

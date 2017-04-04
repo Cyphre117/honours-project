@@ -22,6 +22,8 @@
 // - hand tool movements are the wrong scale
 // - hand tool rotation is not around the controller
 
+enum class RenderMode { VR, Standard };
+
 void set_gl_attribs();
 void draw_gui();
 
@@ -34,6 +36,7 @@ int main(int argc, char** argv)
 	PointCloud point_cloud;
 	ShaderProgram standard_shader;
 	ShaderProgram point_light_shader;
+	RenderMode render_mode = RenderMode::VR;
 
 	// First stage initialisation
 	bool running = true;
@@ -55,6 +58,7 @@ int main(int argc, char** argv)
 		vr_system->pointLightTool()->setDeactivateShader( &standard_shader );
 		vr_system->pointLightTool()->setActivateShader( &point_light_shader );
 		vr_system->pointerTool()->setShader( &standard_shader );
+		vr_system->setPointCloud( &point_cloud );
 
 		scene.init();
 
@@ -112,39 +116,47 @@ int main(int argc, char** argv)
 
 		ImGui::Frame( window->SDLWindow(), vr_system );
 
-		// THE RENDER TEXTURE IS CLEARED WHEN
-		// - render texture is not multisampled
-		// - But blitting to the resolve buffer is not working
+		if( render_mode == RenderMode::VR )
+		{
+			// THE RENDER TEXTURE IS CLEARED WHEN
+			// - render texture is not multisampled
+			// - But blitting to the resolve buffer is not working
 
-		vr_system->bindEyeTexture( vr::Eye_Left );
-		//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Left ) );
-		//glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
-	
-		set_gl_attribs();
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+			vr_system->bindEyeTexture( vr::Eye_Left );
+			//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Left ) );
+			//glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
 
-		scene.render( vr::Eye_Left );
-		point_cloud.render( vr::Eye_Left );
-		vr_system->render( vr::Eye_Left );
+			set_gl_attribs();
+			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		//draw_gui();
-		//ImGui::Render();
+			scene.render( vr::Eye_Left );
+			point_cloud.render( vr::Eye_Left );
+			vr_system->render( vr::Eye_Left );
 
-		vr_system->bindEyeTexture( vr::Eye_Right );
-		//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Right ) );
-		//glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
+			//draw_gui();
+			//ImGui::Render();
 
-		set_gl_attribs();
-		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+			vr_system->bindEyeTexture( vr::Eye_Right );
+			//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Right ) );
+			//glViewport( 0, 0, vr_system->renderTargetWidth(), vr_system->renderTargetHeight() );
 
-		scene.render( vr::Eye_Right );
-		point_cloud.render( vr::Eye_Right );
-		vr_system->render( vr::Eye_Right );
+			set_gl_attribs();
+			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		vr_system->blitEyeTextures();
-		vr_system->submitEyeTextures();
+			scene.render( vr::Eye_Right );
+			point_cloud.render( vr::Eye_Right );
+			vr_system->render( vr::Eye_Right );
+
+			vr_system->blitEyeTextures();
+			vr_system->submitEyeTextures();
+
+			window->render( vr_system->resolveEyeTexture( vr::Eye_Left ), vr_system->resolveEyeTexture( vr::Eye_Right ) );
+		}
+		else if( render_mode == RenderMode::Standard )
+		{
+
+		}
 		
-		window->render( vr_system->resolveEyeTexture( vr::Eye_Left ), vr_system->resolveEyeTexture( vr::Eye_Right ) );
 		window->present();
 
 		// Update dt

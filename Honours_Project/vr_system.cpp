@@ -3,6 +3,7 @@
 #include <gtc/type_ptr.hpp>
 #include <SDL.h>
 #include <iostream>
+#include "point_cloud.h"
 
 // Static member delcarations
 VRSystem* VRSystem::self_ = nullptr;
@@ -13,7 +14,8 @@ VRSystem::VRSystem() :
 	render_target_width_(0),
 	render_target_height_(0),
 	near_clip_plane_(0.1f),
-	far_clip_plane_(100.0f)
+	far_clip_plane_(100.0f),
+	point_cloud_(nullptr)
 {
 }
 
@@ -90,6 +92,7 @@ bool VRSystem::init()
 	std::cout << "Serial Number: " << getDeviceString( vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SerialNumber_String, NULL ) << std::endl;
 
 	vr_system_->GetRecommendedRenderTargetSize( &render_target_width_, &render_target_height_ );
+	std::cout << "HMD requested resolution: " << render_target_width_ << " by " << render_target_height_ << std::endl;
 
 	/* SETUP FRAME BUFFERS */
 	for( int i = 0; i < 2; i++ )
@@ -230,7 +233,18 @@ void VRSystem::updatePoses()
 
 void VRSystem::updateDevices( float dt )
 {
-	if( left_controller_.isInitialised() ) left_controller_.update( dt );
+	if( left_controller_.isInitialised() )
+	{
+		left_controller_.update( dt );
+
+		if( left_controller_.isButtonPressed( vr::k_EButton_Grip ) )
+		{
+			std::cout << "Grip gripped" << std::endl;
+			point_cloud_->resetPosition();
+			move_tool_.resetTransform();
+		}
+	}
+
 	if( right_controller_.isInitialised() )
 	{
 		right_controller_.update( dt );

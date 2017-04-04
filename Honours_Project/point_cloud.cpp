@@ -65,7 +65,8 @@ void PointCloud::render( vr::EVREye eye )
 	projection_mat_ = system->projectionMartix( eye );
 
 	active_shader_->bind();
-	glUniformMatrix4fv( modl_matrix_location_, 1, GL_FALSE, glm::value_ptr( model_mat_ * move_tool_->translationMatrix() * move_tool_->rotationMatrix() ) );
+	offset_mat_ = move_tool_->translationMatrix() * move_tool_->rotationMatrix();
+	glUniformMatrix4fv( modl_matrix_location_, 1, GL_FALSE, glm::value_ptr( model_mat_ * offset_mat_ ) );
 	glUniformMatrix4fv( view_matrix_location_, 1, GL_FALSE, glm::value_ptr( view_mat_ ) );
 	glUniformMatrix4fv( proj_matrix_location_, 1, GL_FALSE, glm::value_ptr( projection_mat_ ) );
 
@@ -172,4 +173,5 @@ void PointCloud::resetPosition()
 	model_mat_ = glm::translate( model_mat_, position );
 	model_mat_ = glm::scale( model_mat_, glm::vec3( scale, scale, scale ) );
 	model_mat_ = glm::translate( model_mat_, -center );
+	offset_mat_ = glm::mat4();
 }
