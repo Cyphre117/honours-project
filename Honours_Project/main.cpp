@@ -66,6 +66,7 @@ int main(int argc, char** argv)
 		point_cloud.setMoveTool( vr_system->moveTool() );
 		point_cloud.init();
 		point_cloud.loadFile( "models/dragon_res2.ply" );
+		point_cloud.loadFile( "models/bunny_res1.ply" );
 	}
 
 	float dt = 0.0;
@@ -85,30 +86,6 @@ int main(int argc, char** argv)
 
 			ImGui::ProcessEvent( &sdl_event );
 		}
-
-		// Hand tool tester code
-		/*
-		if( vr_system->leftControler() )
-		{
-			if( vr_system->leftControler()->isButtonDown( vr::k_EButton_SteamVR_Trigger ) )
-			{
-				glm::vec2 delta = vr_system->leftControler()->touchpadDelta();
-				glm::mat4 model = point_cloud.modelMatrix();
-
-				glm::vec3 transform_delta = vr_system->leftControler()->velocity() * dt;
-				glm::vec3 rotation_delta = vr_system->leftControler()->angularVelocity() * dt;
-
-				model = glm::translate( model, transform_delta );
-				model = glm::rotate( model, glm::length(rotation_delta), rotation_delta);
-				point_cloud.setModelMatrix( model );
-			}
-			else if( vr_system->leftControler()->isButtonPressed( vr::k_EButton_Grip ) )
-			{
-				point_cloud.resetPosition();
-			}
-		}*/
-
-		//point_cloud.setOffsetMatrix( vr_system->moveTool()->originTransform() );
 
 		vr_system->processVREvents();
 		vr_system->manageDevices();
