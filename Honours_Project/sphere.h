@@ -6,11 +6,18 @@
 
 class ShaderProgram;
 
+// TODO: implement rule of 0/3/5
+// not having proper copy + move constuctors has already been a source of bugs!
+
 class Sphere
 {
 public:
 	Sphere();
 	~Sphere();
+
+	// remove copy consturctors, it's possible these could be implemented if we need them
+	Sphere( Sphere const& ) = delete;
+	Sphere& operator=( Sphere const& ) = delete;
 
 	void init();
 	void shutdown();

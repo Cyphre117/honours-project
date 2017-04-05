@@ -23,6 +23,8 @@ public:
 	void render( const glm::mat4& view, const glm::mat4& projection ) override;
 
 	// Getters
+
+	// If you want to return a sphere copy you will need to define an explicit copy constructor
 	const Sphere& sphere() const { return sphere_; }
 
 protected:
