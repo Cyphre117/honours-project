@@ -81,47 +81,6 @@ void PointerTool::update( float dt )
 			0,0,length, 1,0,1
 		};
 
-		/*
-		// create the 3d cursor
-		const int segments = 12;
-		const float radius = 0.01f;
-		const float incr = 6.283f / (float)segments;
-		for( int i = 0; i < segments; i++ )
-		{
-			// first circle
-			verts.push_back( std::sin(incr * i) * radius );
-			verts.push_back( std::cos(incr * i) * radius );
-			verts.push_back( length );
-			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
-
-			verts.push_back( std::sin( incr * (i + 1) ) * radius );
-			verts.push_back( std::cos( incr * (i + 1) ) * radius );
-			verts.push_back( length );
-			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
-
-			// second circle
-			verts.push_back( std::sin( incr * i ) * radius );
-			verts.push_back( 0.0f );
-			verts.push_back( length + std::cos( incr * i ) * radius );
-			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
-
-			verts.push_back( std::sin( incr * (i + 1) ) * radius );
-			verts.push_back( 0.0f );
-			verts.push_back( length + std::cos( incr * (i + 1) ) * radius );
-			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
-
-			// third circle
-			verts.push_back( 0.0f );
-			verts.push_back( std::sin( incr * i ) * radius );
-			verts.push_back( length + std::cos( incr * i ) * radius );
-			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
-
-			verts.push_back( 0.0f );
-			verts.push_back( std::sin( incr * (i + 1) ) * radius );
-			verts.push_back( length + std::cos( incr * (i + 1) ) * radius );
-			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
-		}*/
-
 		glBufferData( GL_ARRAY_BUFFER, sizeof( verts[0] ) * verts.size(), verts.data(), GL_STREAM_DRAW );
 		num_verts_ = verts.size() / 6;
 

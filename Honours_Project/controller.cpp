@@ -39,7 +39,7 @@ void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, cons
 	vr::TrackedPropertyError tracked_property_error;
 	std::string render_model_name = vr_system->getDeviceString( index_, vr::Prop_RenderModelName_String, &tracked_property_error );
 	vr::EVRRenderModelError render_model_error = vr::VRRenderModelError_Loading;
-	std::cout << "Trying to load model '" << render_model_name << "'..." << std::endl;
+	std::cout << "Loading render model '" << render_model_name << "'... " << std::flush;
 
 	// Suspend the application while we wait for the render models to load
 	while( true )
@@ -64,7 +64,7 @@ void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, cons
 
 	if( render_model_error != vr::VRRenderModelError_None )
 	{
-		std::cout << "unable to load render model texture" << std::endl;
+		std::cout << "FAILED!" << std::endl;
 	}
 	if( render_model_error == vr::VRRenderModelError_None )
 	{
@@ -83,8 +83,7 @@ void Controller::init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, cons
 		glGenBuffers( 1, &model_vbo_ );
 		glBindBuffer( GL_ARRAY_BUFFER, model_vbo_ );
 		glBufferData( GL_ARRAY_BUFFER, sizeof( vr::RenderModel_Vertex_t ) * vr_model->unVertexCount, vr_model->rVertexData, GL_STATIC_DRAW );
-		//model_num_verts_ = vr_model->unVertexCount;
-		std::cout << "loaded " << model_num_verts_ << " from render model" << std::endl;
+		std::cout << "OK " << vr_model->unTriangleCount << " triangles" << std::endl;
 
 		// Identify the components in the vertex buffer
 		glEnableVertexAttribArray( 0 );
