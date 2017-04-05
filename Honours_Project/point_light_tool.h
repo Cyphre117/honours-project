@@ -18,7 +18,7 @@ public:
 	void activate() override;
 	void deactivate() override;
 	void update( float dt ) override;
-	void render( vr::EVREye eye ) override {}
+	void render( const glm::mat4& view, const glm::mat4& projection ) override {}
 
 	// Setters
 	void setTargetShader( ShaderProgram** target ) { target_shader_ = target; }

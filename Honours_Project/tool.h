@@ -1,5 +1,6 @@
 #pragma once
 #include "openvr.h"
+#include "glm.hpp"
 
 class VRSystem;
 class Controller;
@@ -18,7 +19,7 @@ public:
 	virtual void activate() = 0;
 	virtual void deactivate() = 0;
 	virtual void update( float dt ) = 0;
-	virtual void render( vr::EVREye eye ) = 0;
+	virtual void render( const glm::mat4& view, const glm::mat4& projection ) = 0;
 
 	// Setters
 	void setController( Controller* controller ) { controller_ = controller; }

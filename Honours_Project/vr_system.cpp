@@ -255,20 +255,20 @@ void VRSystem::updateDevices( float dt )
 	}
 }
 
-void VRSystem::render( vr::EVREye eye )
+void VRSystem::render( const glm::mat4& view, const glm::mat4& projection )
 {
-	drawControllers( eye );
+	drawControllers( view, projection );
 
-	if( move_tool_.isInitialised() ) move_tool_.render( eye );
-	if( pointer_tool_.isInitialised() ) pointer_tool_.render( eye );
-	if( point_light_tool_.isInitialised() ) point_light_tool_.render( eye );
+	if( move_tool_.isInitialised() ) move_tool_.render( view, projection );
+	if( pointer_tool_.isInitialised() ) pointer_tool_.render( view, projection );
+	if( point_light_tool_.isInitialised() ) point_light_tool_.render( view, projection );
 }
 
-void VRSystem::drawControllers( vr::EVREye eye )
+void VRSystem::drawControllers( glm::mat4 view, glm::mat4 projection )
 {
 	controller_shader_.bind();
-	glUniformMatrix4fv( controller_shader_view_mat_locaton_, 1, GL_FALSE, glm::value_ptr( viewMatrix( eye ) ) );
-	glUniformMatrix4fv( controller_shader_proj_mat_locaton_, 1, GL_FALSE, glm::value_ptr( projectionMartix( eye ) ) );
+	glUniformMatrix4fv( controller_shader_view_mat_locaton_, 1, GL_FALSE, glm::value_ptr( view ) );
+	glUniformMatrix4fv( controller_shader_proj_mat_locaton_, 1, GL_FALSE, glm::value_ptr( projection ) );
 
 	if( left_controller_.isInitialised() )
 	{

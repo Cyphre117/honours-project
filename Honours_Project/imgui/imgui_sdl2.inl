@@ -349,7 +349,7 @@ bool ImGui::Init(SDL_Window* window)
     return true;
 }
 
-void ImGui::Frame(SDL_Window* window, VRSystem* vr_system )
+void ImGui::Frame( SDL_Window* window, VRSystem* vr_system )
 {
     if (!g_FontTexture)
         ImGui::CreateDeviceObjects();
@@ -359,13 +359,13 @@ void ImGui::Frame(SDL_Window* window, VRSystem* vr_system )
     // Setup display size (every frame to accommodate for window resizing)
     int w, h;
     int display_w, display_h;
-	int companion_w, companion_h;
-    //SDL_GetWindowSize(window, &w, &h);
-    //SDL_GL_GetDrawableSize(window, &display_w, &display_h);
-	w = display_w = 1024;//hmd->reccomendedRenderTargetWidth();
-	h = display_h = 1024;//hmd->reccomendedRenderTargetHeight();
-	SDL_GetWindowSize(window, &companion_w, &companion_h);
-	io.DisplaySize = ImVec2((float)w, (float)h);
+    SDL_GetWindowSize(window, &w, &h);
+    SDL_GL_GetDrawableSize(window, &display_w, &display_h);
+	//w = display_w = 1024;//hmd->reccomendedRenderTargetWidth();
+	//h = display_h = 1024;//hmd->reccomendedRenderTargetHeight();
+	//int companion_w, companion_h;
+	//SDL_GetWindowSize(window, &companion_w, &companion_h);
+	io.DisplaySize = ImVec2((float)display_w, (float)display_h);
     io.DisplayFramebufferScale = ImVec2(w > 0 ? ((float)display_w / w) : 0, h > 0 ? ((float)display_h / h) : 0);
 
     // Setup time step
@@ -383,11 +383,11 @@ void ImGui::Frame(SDL_Window* window, VRSystem* vr_system )
 
 		// Rescale the resolution to match the vive
 		// Still doesnt quite match on companion window, is this due to the vr distortion going on?
-		mx = (int)(mx / (float)companion_w * 2.0f) * display_w;
-		my = (int)(my / (float)companion_h) * display_h;
+		mx = (int)(mx / (float)display_w * 2.0f) * display_w;
+		my = (int)(my / (float)display_h) * display_h;
 
 		if( SDL_GetWindowFlags( window ) & SDL_WINDOW_MOUSE_FOCUS )
-			io.MousePos = ImVec2( (mx / (float)companion_w) * 0.5f * display_w, (float)my );   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
+			io.MousePos = ImVec2( (mx / (float)display_w) * 0.5f * display_w, (float)my );   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
 		else
 			io.MousePos = ImVec2( -1, -1 );
 
@@ -412,8 +412,8 @@ void ImGui::Frame(SDL_Window* window, VRSystem* vr_system )
 	// Clamp mouse position to screen
 	if( io.MousePos.x < 0 ) io.MousePos.x = 0;
 	if( io.MousePos.y < 0 ) io.MousePos.y = 0;
-	if( io.MousePos.x > w ) io.MousePos.x = (float)w;
-	if( io.MousePos.y > h ) io.MousePos.y = (float)h;
+	if( io.MousePos.x > w ) io.MousePos.x = (float)display_w;
+	if( io.MousePos.y > h ) io.MousePos.y = (float)display_h;
 
     // Hide OS mouse cursor if ImGui is drawing it
     SDL_ShowCursor(io.MouseDrawCursor ? 0 : 1);

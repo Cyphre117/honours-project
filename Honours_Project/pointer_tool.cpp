@@ -36,6 +36,9 @@ bool PointerTool::init()
 	shader_view_mat_location_ = shader_->getUniformLocation( "view" );
 	shader_proj_mat_location_ = shader_->getUniformLocation( "projection" );
 
+	sphere_.setRadius( 0.04f );
+	sphere_.init();
+
 	return success;
 }
 
@@ -56,11 +59,13 @@ void PointerTool::shutdown()
 void PointerTool::activate()
 {
 	active_ = true;
+	sphere_.setActive( true );
 }
 
 void PointerTool::deactivate()
 {
 	active_ = false;
+	sphere_.setActive( false );
 }
 
 void PointerTool::update( float dt )
@@ -76,6 +81,7 @@ void PointerTool::update( float dt )
 			0,0,length, 1,0,1
 		};
 
+		/*
 		// create the 3d cursor
 		const int segments = 12;
 		const float radius = 0.01f;
@@ -114,24 +120,32 @@ void PointerTool::update( float dt )
 			verts.push_back( std::sin( incr * (i + 1) ) * radius );
 			verts.push_back( length + std::cos( incr * (i + 1) ) * radius );
 			verts.push_back( 1.0f ); verts.push_back( 0.0f ); verts.push_back( 1.0f );
-		}
+		}*/
 
 		glBufferData( GL_ARRAY_BUFFER, sizeof( verts[0] ) * verts.size(), verts.data(), GL_STREAM_DRAW );
 		num_verts_ = verts.size() / 6;
+
+		sphere_.setActive( true );
+		sphere_.setPosition( { 0, 0, length } );
+		sphere_.update( dt );
 	}
 	else
 	{
+		sphere_.setActive( false );
 		num_verts_ = 0;
 	}
 }
 
-void PointerTool::render( vr::EVREye eye )
+void PointerTool::render( const glm::mat4& view, const glm::mat4& projection )
 {
 	shader_->bind();
-	glUniformMatrix4fv( shader_view_mat_location_, 1, GL_FALSE, glm::value_ptr( vr_system_->viewMatrix( eye ) ) );
-	glUniformMatrix4fv( shader_proj_mat_location_, 1, GL_FALSE, glm::value_ptr( vr_system_->projectionMartix( eye ) ) );
+	glUniformMatrix4fv( shader_view_mat_location_, 1, GL_FALSE, glm::value_ptr( view ) );
+	glUniformMatrix4fv( shader_proj_mat_location_, 1, GL_FALSE, glm::value_ptr( projection ) );
 	glUniformMatrix4fv( shader_modl_mat_location_, 1, GL_FALSE, glm::value_ptr( controller_->deviceToAbsoluteTracking() ) );
 
 	glBindVertexArray( vao_ );
 	glDrawArrays( GL_LINES, 0, num_verts_ );
+
+	sphere_.setParentTransform( controller_->deviceToAbsoluteTracking() );
+	sphere_.render( view, projection );
 }

@@ -14,7 +14,9 @@ public:
 	~PointCloud();
 
 	bool init();
-	void render( vr::EVREye eye );
+	void shutdown();
+	void update( float dt );
+	void render( const glm::mat4& view, const glm::mat4& projection );
 	void resetPosition();
 	void loadFile( std::string filepath );
 
@@ -43,8 +45,6 @@ protected:
 	GLint proj_matrix_location_;
 	glm::mat4 offset_mat_;
 	glm::mat4 model_mat_;
-	glm::mat4 view_mat_;
-	glm::mat4 projection_mat_;
 
 	GLuint vao_;
 	GLuint vbo_;

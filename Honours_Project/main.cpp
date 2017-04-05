@@ -21,6 +21,7 @@
 // - get blitting from multisampled to non multisampled texture working
 // - hand tool movements are the wrong scale
 // - hand tool rotation is not around the controller
+// - incorporate tjh_camera.h!!! It's your time to shine!
 
 enum class RenderMode { VR, Standard };
 
@@ -59,13 +60,14 @@ int main(int argc, char** argv)
 		vr_system->pointLightTool()->setActivateShader( &point_light_shader );
 		vr_system->pointerTool()->setShader( &standard_shader );
 		vr_system->setPointCloud( &point_cloud );
+		Sphere::setShader( &standard_shader );
 
 		scene.init();
 
 		point_cloud.setActiveShader( &standard_shader );
 		point_cloud.setMoveTool( vr_system->moveTool() );
 		point_cloud.init();
-		point_cloud.loadFile( "models/dragon_res2.ply" );
+		//point_cloud.loadFile( "models/dragon_res2.ply" );
 		point_cloud.loadFile( "models/bunny_res1.ply" );
 	}
 
@@ -81,22 +83,37 @@ int main(int argc, char** argv)
 			if( sdl_event.type == SDL_QUIT ) running = false;
 			else if( sdl_event.type == SDL_KEYDOWN )
 			{
-				if( sdl_event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ) running = false;
+				if( sdl_event.key.keysym.scancode == SDL_SCANCODE_ESCAPE ) { running = false; }
+				else if( sdl_event.key.keysym.scancode == SDL_SCANCODE_GRAVE )
+				{
+					if( render_mode == RenderMode::VR ) {
+						render_mode = RenderMode::Standard;
+					} else {
+						render_mode = RenderMode::VR;
+					}
+				}
 			}
 
 			ImGui::ProcessEvent( &sdl_event );
 		}
+		ImGui::Frame( window->SDLWindow(), vr_system );
 
+		// Handle the VR backend
 		vr_system->processVREvents();
 		vr_system->manageDevices();
 		vr_system->updatePoses();
 		vr_system->updateDevices( dt );
 
 		scene.update( dt );
-		ImGui::Frame( window->SDLWindow(), vr_system );
 
 		if( render_mode == RenderMode::VR )
 		{
+			// Grab matricies from the HMD
+			glm::mat4 hmd_view_left = vr_system->viewMatrix( vr::Eye_Left );
+			glm::mat4 hmd_view_right = vr_system->viewMatrix( vr::Eye_Right );
+			glm::mat4 hmd_projection_left = vr_system->projectionMartix( vr::Eye_Left );
+			glm::mat4 hmd_projection_right = vr_system->projectionMartix( vr::Eye_Right );
+
 			// THE RENDER TEXTURE IS CLEARED WHEN
 			// - render texture is not multisampled
 			// - But blitting to the resolve buffer is not working
@@ -108,12 +125,12 @@ int main(int argc, char** argv)
 			set_gl_attribs();
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-			scene.render( vr::Eye_Left );
-			point_cloud.render( vr::Eye_Left );
-			vr_system->render( vr::Eye_Left );
+			scene.render( hmd_view_left, hmd_projection_left );
+			point_cloud.render( hmd_view_left, hmd_projection_left );
+			vr_system->render( hmd_view_left, hmd_projection_left );
 
-			//draw_gui();
-			//ImGui::Render();
+			draw_gui();
+			ImGui::Render();
 
 			vr_system->bindEyeTexture( vr::Eye_Right );
 			//glBindFramebuffer( GL_FRAMEBUFFER, vr_system->resolveEyeTexture( vr::Eye_Right ) );
@@ -122,9 +139,9 @@ int main(int argc, char** argv)
 			set_gl_attribs();
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-			scene.render( vr::Eye_Right );
-			point_cloud.render( vr::Eye_Right );
-			vr_system->render( vr::Eye_Right );
+			scene.render( hmd_view_right, hmd_projection_right );
+			point_cloud.render( hmd_view_right, hmd_projection_right );
+			vr_system->render( hmd_view_right, hmd_projection_right );
 
 			vr_system->blitEyeTextures();
 			vr_system->submitEyeTextures();
@@ -133,7 +150,24 @@ int main(int argc, char** argv)
 		}
 		else if( render_mode == RenderMode::Standard )
 		{
+			// Get matricies from the 'traditional' camera
+			glm::mat4 view = glm::lookAt( glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec3{0.0f, 0.9f, -1.0f}, glm::vec3{0.0f, 1.0f, 0.0f} );
+			glm::mat4 projection = glm::perspective( glm::radians( 45.0f ), window->width() / (float)window->height(), 0.1f, 20.0f );
 
+			glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+			set_gl_attribs();
+			glViewport( 0, 0, window->width(), window->height() );
+			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+
+			
+			scene.render( view, projection );
+			point_cloud.render( view, projection );
+			vr_system->render( view, projection );
+
+
+			draw_gui();
+			ImGui::Render();
 		}
 		
 		window->present();

@@ -2,6 +2,7 @@
 #include "shader_program.h"
 #include <vector>
 #include <gtc/type_ptr.hpp>
+#include <gtc/matrix_transform.hpp>
 #include "vr_system.h"
 
 ShaderProgram* Sphere::shader_ = nullptr;
@@ -100,13 +101,22 @@ void Sphere::update( float dt )
 	num_verts_ = verts.size() / 6;
 }
 
-void Sphere::render( vr::EVREye	eye )
+void Sphere::render( glm::mat4 view, glm::mat4 projection )
 {
-	shader_->bind();
-	glUniformMatrix4fv( shader_view_mat_location_, 1, GL_FALSE, glm::value_ptr( VRSystem::get()->viewMatrix( eye ) ) );
-	glUniformMatrix4fv( shader_proj_mat_location_, 1, GL_FALSE, glm::value_ptr( VRSystem::get()->projectionMartix( eye ) ) );
-	glUniformMatrix4fv( shader_modl_mat_location_, 1, GL_FALSE, glm::value_ptr( glm::mat4() ) );
+	if( active_ )
+	{
+		shader_->bind();
+		glUniformMatrix4fv( shader_view_mat_location_, 1, GL_FALSE, glm::value_ptr( view ) );
+		glUniformMatrix4fv( shader_proj_mat_location_, 1, GL_FALSE, glm::value_ptr( projection ) );
+		glUniformMatrix4fv( shader_modl_mat_location_, 1, GL_FALSE, glm::value_ptr( glm::translate( parent_transform_, position_ ) ) );
 
-	glBindVertexArray( vao_ );
-	glDrawArrays( GL_LINES, 0, num_verts_ );
+		glBindVertexArray( vao_ );
+		glDrawArrays( GL_LINES, 0, num_verts_ );
+	}
+}
+
+bool Sphere::isTouching( const Sphere& other ) const
+{
+	float distance = glm::length( position_ - other.position() );
+	return distance <= radius_ + other.radius() && active_;
 }

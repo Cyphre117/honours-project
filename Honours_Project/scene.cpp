@@ -1,6 +1,7 @@
 #include "scene.h"
 #include "window.h"
 #include "vr_system.h"
+#include "imgui\imgui.h"
 #include <gtc/type_ptr.hpp>
 #include <vector>
 
@@ -27,8 +28,8 @@ bool Scene::init()
 	proj_matrix_location_ = shader_.getUniformLocation( "projection" );
 	
 	// Setup objects
-	sphere_.setShader( &shader_ );
-	sphere_.init();
+	sphere_2_.init();
+	sphere_1_.init();
 
 	// Create circular floor grid
 	{
@@ -120,28 +121,40 @@ void Scene::shutdown()
 
 void Scene::update( float dt )
 {
-	sphere_.update( dt );
+	static float time = 0.0f;
+	time += dt;
+
+	sphere_1_.setPosition( { 0, 2, -2 } );
+	sphere_2_.setPosition( { 1 + std::sin( time ), 2, -2 } );
+
+	sphere_1_.update( dt );
+	sphere_2_.update( dt );
+
+	ImGui::Text( "Spheres touching: %s", sphere_1_.isTouching( sphere_2_ ) ? "yes" : "no" );
+	if( sphere_1_.isTouching( sphere_2_ ) )
+	{
+		sphere_1_.setColour( 1, 1, 1 );
+	}
+	else sphere_1_.setColour( 1, 0, 1 );
 }
 
-void Scene::render( vr::EVREye eye )
+void Scene::render( glm::mat4 view, glm::mat4 projection )
 {
-	sphere_.render( eye );
-	render_floor( eye );
+	sphere_1_.render( view, projection );
+	sphere_2_.render( view, projection );
+	render_floor( view, projection );
 }
 
-void Scene::render_floor( vr::EVREye eye )
+void Scene::render_floor( glm::mat4 view, glm::mat4 projection )
 {
 	shader_.bind();
 
-	model_mat_ = view_mat_ = projection_mat_ = glm::mat4( 1.0 );
-
-	view_mat_ = vr_system_->viewMatrix( eye );
-	projection_mat_ = vr_system_->projectionMartix( eye );
+	model_mat_ = glm::mat4( 1.0 );
 
 	// Send matricies
 	glUniformMatrix4fv( modl_matrix_location_, 1, GL_FALSE, glm::value_ptr( model_mat_ ) );
-	glUniformMatrix4fv( view_matrix_location_, 1, GL_FALSE, glm::value_ptr( view_mat_ ) );
-	glUniformMatrix4fv( proj_matrix_location_, 1, GL_FALSE, glm::value_ptr( projection_mat_ ) );
+	glUniformMatrix4fv( view_matrix_location_, 1, GL_FALSE, glm::value_ptr( view ) );
+	glUniformMatrix4fv( proj_matrix_location_, 1, GL_FALSE, glm::value_ptr( projection ) );
 
 	glBindVertexArray( floor_vao_ );
 	glDrawArrays( GL_LINES, 0, num_floor_verts_ );

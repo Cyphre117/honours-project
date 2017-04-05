@@ -21,7 +21,7 @@ public:
 	void manageDevices();
 	void updatePoses();
 	void updateDevices( float dt );
-	void render( vr::EVREye eye );
+	void render( const glm::mat4& view, const glm::mat4& projection );
 	void bindEyeTexture( vr::EVREye eye );
 	void blitEyeTextures();
 	void submitEyeTextures();
@@ -62,7 +62,7 @@ private:
 	vr::IVRSystem* vr_system_;
 
 	/* PRIVATE FUNCTIONS */
-	void drawControllers( vr::EVREye eye );
+	void drawControllers( glm::mat4 view, glm::mat4 projection );
 
 	/* MEMBER VARIBALES */
 	PointCloud* point_cloud_;

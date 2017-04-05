@@ -19,7 +19,7 @@ public:
 	bool init();
 	void shutdown();
 	void update( float dt );
-	void render( vr::EVREye eye );
+	void render( glm::mat4 view, glm::mat4 projection );
 
 protected:
 	Window* window_;
@@ -30,13 +30,12 @@ protected:
 	GLint view_matrix_location_;
 	GLint proj_matrix_location_;
 	glm::mat4 model_mat_;
-	glm::mat4 view_mat_;
-	glm::mat4 projection_mat_;
 
-	void render_floor( vr::EVREye eye );
+	void render_floor( glm::mat4 view, glm::mat4 projection );
 
 	GLuint floor_vao_;
 	GLsizei num_floor_verts_;
 
-	Sphere sphere_;
+	Sphere sphere_1_;
+	Sphere sphere_2_;
 };

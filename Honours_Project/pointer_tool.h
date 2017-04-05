@@ -2,6 +2,7 @@
 
 #include "tool.h"
 #include "GL/glew.h"
+#include "sphere.h"
 
 // TODO:
 // - render a line coming out of the controller when the touchpad is pressed
@@ -19,9 +20,11 @@ public:
 	void activate() override;
 	void deactivate() override;
 	void update( float dt ) override;
-	void render( vr::EVREye eye ) override;
+	void render( const glm::mat4& view, const glm::mat4& projection ) override;
 
 protected:
+
+	Sphere sphere_;
 
 	GLuint vao_ = 0;
 	GLuint vbo_ = 0;

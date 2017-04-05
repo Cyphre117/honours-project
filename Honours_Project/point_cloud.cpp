@@ -20,6 +20,7 @@ PointCloud::PointCloud() :
 
 PointCloud::~PointCloud()
 {
+	shutdown();
 }
 
 bool PointCloud::init()
@@ -43,25 +44,37 @@ bool PointCloud::init()
 	glEnableVertexAttribArray( 1 );
 	glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
 
-	//loadFile( "models/dragon_res2.ply" );
-
 	glBindVertexArray( 0 );
 	
 	return true;
 }
 
-void PointCloud::render( vr::EVREye eye )
+void PointCloud::shutdown()
+{
+	if( vao_ ) {
+		glDeleteVertexArrays( 1, &vao_ );
+		vao_ = 0;
+	}
+	if( vbo_ ) {
+		glDeleteBuffers( 1, &vbo_ );
+		vbo_ = 0;
+	}
+}
+
+void PointCloud::update( float dt )
+{
+
+}
+
+void PointCloud::render( const glm::mat4& view, const glm::mat4& projection )
 {
 	VRSystem* system = VRSystem::get();
-
-	view_mat_ = system->viewMatrix( eye );
-	projection_mat_ = system->projectionMartix( eye );
 
 	active_shader_->bind();
 	offset_mat_ = move_tool_->translationMatrix() * move_tool_->rotationMatrix();
 	glUniformMatrix4fv( modl_matrix_location_, 1, GL_FALSE, glm::value_ptr( model_mat_ * offset_mat_ ) );
-	glUniformMatrix4fv( view_matrix_location_, 1, GL_FALSE, glm::value_ptr( view_mat_ ) );
-	glUniformMatrix4fv( proj_matrix_location_, 1, GL_FALSE, glm::value_ptr( projection_mat_ ) );
+	glUniformMatrix4fv( view_matrix_location_, 1, GL_FALSE, glm::value_ptr( view ) );
+	glUniformMatrix4fv( proj_matrix_location_, 1, GL_FALSE, glm::value_ptr( projection ) );
 
 	glBindVertexArray( vao_ );
 	glDrawArrays( GL_POINTS, 0, num_verts_ );
