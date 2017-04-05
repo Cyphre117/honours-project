@@ -7,6 +7,9 @@
 #include <gtx/matrix_decompose.hpp>
 #include <iostream>
 
+#define TJH_CAMERA_IMPLEMENTATION
+#include "tjh/tjh_camera.h"
+
 #include "window.h"
 #include "vr_system.h"
 #include "scene.h"
@@ -32,6 +35,7 @@ int main(int argc, char** argv)
 {
 	// Setup
 	Window* window;
+	Camera standard_camera;
 	VRSystem* vr_system;
 	Scene scene;
 	PointCloud point_cloud;
@@ -151,20 +155,18 @@ int main(int argc, char** argv)
 		else if( render_mode == RenderMode::Standard )
 		{
 			// Get matricies from the 'traditional' camera
-			glm::mat4 view = glm::lookAt( glm::vec3{ 0.0f, 1.0f, 0.0f }, glm::vec3{0.0f, 0.9f, -1.0f}, glm::vec3{0.0f, 1.0f, 0.0f} );
-			glm::mat4 projection = glm::perspective( glm::radians( 45.0f ), window->width() / (float)window->height(), 0.1f, 20.0f );
+			standard_camera.update( dt );
+			glm::mat4 view = standard_camera.view();
+			glm::mat4 projection = standard_camera.projection( window->width(), window->height() );
 
 			glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 			set_gl_attribs();
 			glViewport( 0, 0, window->width(), window->height() );
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-
 			
 			scene.render( view, projection );
 			point_cloud.render( view, projection );
 			vr_system->render( view, projection );
-
 
 			draw_gui();
 			ImGui::Render();

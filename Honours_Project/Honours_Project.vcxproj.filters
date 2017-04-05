@@ -19,6 +19,9 @@
     <Filter Include="VR Tools">
       <UniqueIdentifier>{2ef9290d-886e-4559-876b-2d0fcb12175f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="libs\tjh">
+      <UniqueIdentifier>{f5af3034-3cda-40b0-957c-4c0b52de16d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -130,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="sphere.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="tjh\tjh_camera.h">
+      <Filter>libs\tjh</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
