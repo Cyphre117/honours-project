@@ -31,7 +31,9 @@ public:
 	// Getters
 	float radius() const { return radius_; }
 	int segments() const { return segments_; }
+	bool active() const { return active_; }
 	glm::vec3 position() const { return position_; }
+	glm::mat4 parentTransform() const { return parent_transform_; }
 
 protected:
 	bool active_ = true;

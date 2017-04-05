@@ -22,6 +22,9 @@ public:
 	void update( float dt ) override;
 	void render( const glm::mat4& view, const glm::mat4& projection ) override;
 
+	// Getters
+	const Sphere& sphere() const { return sphere_; }
+
 protected:
 
 	Sphere sphere_;

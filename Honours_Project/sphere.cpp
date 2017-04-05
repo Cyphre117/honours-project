@@ -117,6 +117,6 @@ void Sphere::render( glm::mat4 view, glm::mat4 projection )
 
 bool Sphere::isTouching( const Sphere& other ) const
 {
-	float distance = glm::length( position_ - other.position() );
-	return distance <= radius_ + other.radius() && active_;
+	float distance = glm::length( parent_transform_ * glm::vec4( position_, 1.0f ) - other.parentTransform() * glm::vec4( other.position(), 1.0f ) );
+	return distance <= radius_ + other.radius() && active_ && other.active();
 }
