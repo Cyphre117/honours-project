@@ -11,8 +11,11 @@ GLint shader_proj_mat_location_ = 0;
 GLint shader_modl_mat_location_ = 0;
 
 Sphere::Sphere()
-{
+{}
 
+Sphere::Sphere( glm::vec3 position )
+{
+	position_ = position;
 }
 
 Sphere::~Sphere()

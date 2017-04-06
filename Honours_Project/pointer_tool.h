@@ -4,10 +4,6 @@
 #include "GL/glew.h"
 #include "sphere.h"
 
-// TODO:
-// - render a line coming out of the controller when the touchpad is pressed
-// - change pointer length depending on finder position on the touchpad
-
 class PointerTool : public VRTool
 {
 public:

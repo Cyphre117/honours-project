@@ -205,7 +205,7 @@ void VRSystem::manageDevices()
 		{
 			right_controller_.init( right_index, this, controller_shader_ );
 			right_controller_.setActiveTool( &pointer_tool_ );
-			right_controller_.setActiveTool( &point_light_tool_ );
+			//right_controller_.setActiveTool( &point_light_tool_ );
 			std::cout << "Right controller initialised!" << std::endl;
 		}
 	}

@@ -41,7 +41,7 @@ void PointLightTool::deactivate()
 
 void PointLightTool::update( float dt )
 {
-	if( controller_->isButtonDown( vr::k_EButton_SteamVR_Trigger ) )
+	if( controller_ && controller_->isButtonDown( vr::k_EButton_SteamVR_Trigger ) )
 	{
 		// Turn on point light rendering
 		if( target_shader_ )

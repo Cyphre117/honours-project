@@ -70,11 +70,11 @@ void PointerTool::deactivate()
 
 void PointerTool::update( float dt )
 {
-	if( controller_->isButtonDown( vr::k_EButton_SteamVR_Touchpad ) )
+	if( controller_ && controller_->isButtonDown( vr::k_EButton_SteamVR_Touchpad ) )
 	{
 		glBindVertexArray( vao_ );
 		glBindBuffer( GL_ARRAY_BUFFER, vbo_ );
-		float length = -0.45 + -0.4 * controller_->axis( vr::k_EButton_Axis0 ).y;
+		float length = -0.45f + -0.4f * controller_->axis( vr::k_EButton_Axis0 ).y;
 
 		std::vector<GLfloat> verts = {
 			0,0,0, 1,1,1,

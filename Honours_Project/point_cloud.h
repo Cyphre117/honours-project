@@ -21,10 +21,12 @@ public:
 	void loadFile( std::string filepath );
 
 	// Getters
-	inline glm::mat4 modelMatrix() { return model_mat_; }
-	inline glm::vec3 lowerBound() { return lower_bound_; }
-	inline glm::vec3 upperBound() { return upper_bound_; }
-	inline ShaderProgram** activeShaderAddr() { return &active_shader_; }
+	glm::mat4 modelMatrix() const { return model_mat_; }
+	glm::mat4 offsetMatrix() const { return offset_mat_; }
+	glm::mat4 combinedOffsetMatrix();
+	glm::vec3 lowerBound() const { return lower_bound_; }
+	glm::vec3 upperBound() const { return upper_bound_; }
+	ShaderProgram** activeShaderAddr() { return &active_shader_; }
 
 	// Setters
 	void setMoveTool( MoveTool* move_tool ) { move_tool_ = move_tool; }

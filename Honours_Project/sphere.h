@@ -6,13 +6,14 @@
 
 class ShaderProgram;
 
-// TODO: implement rule of 0/3/5
+// TODO: apply rule of 0/3/5
 // not having proper copy + move constuctors has already been a source of bugs!
 
 class Sphere
 {
 public:
 	Sphere();
+	Sphere( glm::vec3 position );
 	~Sphere();
 
 	// remove copy consturctors, it's possible these could be implemented if we need them
@@ -30,6 +31,7 @@ public:
 	void setRadius( float radius ) { radius_ = radius; }
 	void setSegments( int segments ) { segments_ = segments; }
 	void setColour( float r, float g, float b ) { colour_ = { r, g, b }; }
+	void setColour( glm::vec3 colour ) { colour_ = colour; }
 	void setPosition( glm::vec3 position ) { position_ = position; }
 	void setActive( bool active ) { active_ = active; }
 	void setParentTransform( glm::mat4 transform ) { parent_transform_ = transform; }
@@ -44,7 +46,7 @@ public:
 
 protected:
 	bool active_ = true;
-	float radius_ = 0.1f;
+	float radius_ = 0.05f;
 	int segments_ = 20;
 	glm::vec3 colour_ = { 1.0f, 0.0f, 1.0f };
 	glm::vec3 position_ = { 0.0f, 0.0f, 0.0f };

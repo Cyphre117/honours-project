@@ -5,12 +5,7 @@
 #include <gtc/type_ptr.hpp>
 #include <vector>
 
-Scene::Scene() :
-	window_(nullptr),
-	vr_system_(nullptr),
-	floor_vao_(0)
-{
-}
+Scene::Scene() {}
 
 Scene::~Scene() {}
 
@@ -27,10 +22,73 @@ bool Scene::init()
 	view_matrix_location_ = shader_.getUniformLocation( "view" );
 	proj_matrix_location_ = shader_.getUniformLocation( "projection" );
 	
-	// Setup objects
-	sphere_2_.init();
-	sphere_1_.init();
+	// Give the user some ground to stand on
+	init_floor();
 
+	// Init the point cloud
+	point_cloud_.setActiveShader( &shader_ );
+	point_cloud_.setMoveTool( vr_system_->moveTool() );
+	point_cloud_.init();
+
+	init_bunny();
+
+	return true;
+}
+
+void Scene::shutdown()
+{
+	glDeleteVertexArrays( 1, &floor_vao_ );
+	floor_vao_ = 0;
+}
+
+void Scene::update( float dt )
+{
+	static float time = 0.0f;
+	time += dt;
+
+	// Parent all spheres to the point cloud
+	for( auto& sphere : spheres_ )
+	{
+		sphere->setParentTransform( point_cloud_.combinedOffsetMatrix() );
+
+		// Highlight spheres that are touching the pointer
+		if( sphere->isTouching( vr_system_->pointerTool()->sphere() ) )
+		{
+			sphere->setColour( highlight_sphere_colour_ );
+		}
+		else
+		{
+			sphere->setColour( default_sphere_colour_ );
+		}
+
+		sphere->update( dt );
+	}
+
+	//ImGui::Text( "Spheres touching: %s", sphere_1_.isTouching( sphere_2_ ) ? "yes" : "no" );
+
+}
+
+void Scene::render( glm::mat4 view, glm::mat4 projection )
+{
+	if( !current_target_ )
+	{
+		// Parent all spheres to the point cloud
+		for( auto& sphere : spheres_ )
+		{
+			sphere->render( view, projection );
+		}
+	}
+	else
+	{
+		current_target_->render( view, projection );
+	}
+
+	render_floor( view, projection );
+	point_cloud_.render( view, projection );
+}
+
+void Scene::init_floor()
+{
 	// Create circular floor grid
 	{
 		std::vector<GLfloat> verts;
@@ -39,18 +97,18 @@ bool Scene::init()
 		float max_radius = 10.0f;
 
 		int segments = 60;
-		float inc = (3.1415f*2.0f)/(float)segments;
+		float inc = (3.1415f*2.0f) / (float)segments;
 
 		for( int r = 0; r < rings; r++ )
 		{
 			for( int i = 0; i < segments; i++ )
 			{
-				verts.push_back( std::sin( i * inc ) * max_radius * (r / float(rings)) );
+				verts.push_back( std::sin( i * inc ) * max_radius * (r / float( rings )) );
 				verts.push_back( 0.0f );
-				verts.push_back( std::cos( i * inc ) * max_radius * (r / float(rings)) );
-				verts.push_back( (1.0f - (r / float(rings))) * 0.0f );
-				verts.push_back( (1.0f - (r / float(rings))) * 0.8f );
-				verts.push_back( (1.0f - (r / float(rings))) * 0.9f );
+				verts.push_back( std::cos( i * inc ) * max_radius * (r / float( rings )) );
+				verts.push_back( (1.0f - (r / float( rings ))) * 0.0f );
+				verts.push_back( (1.0f - (r / float( rings ))) * 0.8f );
+				verts.push_back( (1.0f - (r / float( rings ))) * 0.9f );
 
 				if( i == segments - 1 )
 				{
@@ -64,23 +122,23 @@ bool Scene::init()
 					verts.push_back( std::cos( (i + 1) * inc ) * max_radius * (r / float( rings )) );
 				}
 
-				verts.push_back( (1.0f - (r / float(rings))) * 0.0f );
-				verts.push_back( (1.0f - (r / float(rings))) * 0.8f );
-				verts.push_back( (1.0f - (r / float(rings))) * 0.9f );
+				verts.push_back( (1.0f - (r / float( rings ))) * 0.0f );
+				verts.push_back( (1.0f - (r / float( rings ))) * 0.8f );
+				verts.push_back( (1.0f - (r / float( rings ))) * 0.9f );
 			}
 		}
 
 		// create triangle at feet
-		verts.push_back( 0.0f ); verts.push_back( 0.0f ); verts.push_back(-0.7f );
+		verts.push_back( 0.0f ); verts.push_back( 0.0f ); verts.push_back( -0.7f );
 		verts.push_back( 0.2f ); verts.push_back( 0.5f ); verts.push_back( 0.2f );
-		
-		verts.push_back( 0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
-		verts.push_back( 0.4f ); verts.push_back( 0.2f ); verts.push_back( 0.4f );
 
 		verts.push_back( 0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
 		verts.push_back( 0.4f ); verts.push_back( 0.2f ); verts.push_back( 0.4f );
 
-		verts.push_back(-0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
+		verts.push_back( 0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
+		verts.push_back( 0.4f ); verts.push_back( 0.2f ); verts.push_back( 0.4f );
+
+		verts.push_back( -0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
 		verts.push_back( 0.4f ); verts.push_back( 0.2f ); verts.push_back( 0.4f );
 
 		verts.push_back( -0.5f ); verts.push_back( 0.0f ); verts.push_back( 0.5f );
@@ -109,42 +167,6 @@ bool Scene::init()
 		glEnableVertexAttribArray( colAttrib );
 		glVertexAttribPointer( colAttrib, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset );
 	}
-
-	return true;
-}
-
-void Scene::shutdown()
-{
-	glDeleteVertexArrays( 1, &floor_vao_ );
-	floor_vao_ = 0;
-}
-
-void Scene::update( float dt )
-{
-	static float time = 0.0f;
-	time += dt;
-
-	sphere_1_.setParentTransform( glm::translate( glm::mat4(), { 0, 1, -1 } ) );
-	sphere_2_.setParentTransform( sphere_1_.parentTransform() );
-	sphere_2_.setPosition( { std::sin( time ), 0, 0 } );
-
-	sphere_1_.update( dt );
-	sphere_2_.update( dt );
-
-	ImGui::Text( "Spheres touching: %s", sphere_1_.isTouching( sphere_2_ ) ? "yes" : "no" );
-	//if( sphere_1_.isTouching( sphere_2_ ) )
-	if( sphere_1_.isTouching( vr_system_->pointerTool()->sphere() ) )
-	{
-		sphere_1_.setColour( 1, 1, 1 );
-	}
-	else sphere_1_.setColour( 1, 0, 1 );
-}
-
-void Scene::render( glm::mat4 view, glm::mat4 projection )
-{
-	sphere_1_.render( view, projection );
-	sphere_2_.render( view, projection );
-	render_floor( view, projection );
 }
 
 void Scene::render_floor( glm::mat4 view, glm::mat4 projection )
@@ -160,4 +182,37 @@ void Scene::render_floor( glm::mat4 view, glm::mat4 projection )
 
 	glBindVertexArray( floor_vao_ );
 	glDrawArrays( GL_LINES, 0, num_floor_verts_ );
+}
+
+void Scene::init_bunny()
+{
+	point_cloud_.loadFile( "models/bunny_res1.ply" );
+
+	// Place spheres
+	spheres_.clear();
+	addSphere( { 0,0,0 } );
+	addSphere( { 0,1,0 } );
+	addSphere( { 1,1,0 } );
+	addSphere( { 1,1,1 } );
+
+	//current_target_ = spheres_[0].get();
+
+	for( auto& sphere : spheres_ )
+	{
+		sphere->setColour( default_sphere_colour_ );
+	}
+}
+
+void Scene::init_dragon()
+{
+	point_cloud_.loadFile( "models/dragon_res2.ply" );
+
+	current_target_ = spheres_[0].get();
+}
+
+void Scene::addSphere( glm::vec3 position )
+{
+	spheres_.push_back( std::unique_ptr<Sphere>( new Sphere( position ) ) );
+	spheres_.back()->setShader( &shader_ );
+	spheres_.back()->init();
 }

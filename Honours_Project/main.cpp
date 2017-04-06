@@ -38,7 +38,6 @@ int main(int argc, char** argv)
 	Camera standard_camera;
 	VRSystem* vr_system;
 	Scene scene;
-	PointCloud point_cloud;
 	ShaderProgram standard_shader;
 	ShaderProgram point_light_shader;
 	RenderMode render_mode = RenderMode::VR;
@@ -59,20 +58,14 @@ int main(int argc, char** argv)
 		point_light_shader.init( "point_light_shader_vs.glsl", "point_light_shader_fs.glsl" );
 		
 		// Tools
-		vr_system->pointLightTool()->setTargetShader( point_cloud.activeShaderAddr() );
-		vr_system->pointLightTool()->setDeactivateShader( &standard_shader );
-		vr_system->pointLightTool()->setActivateShader( &point_light_shader );
+		//vr_system->pointLightTool()->setTargetShader( point_cloud.activeShaderAddr() );
+		//vr_system->pointLightTool()->setDeactivateShader( &standard_shader );
+		//vr_system->pointLightTool()->setActivateShader( &point_light_shader );
 		vr_system->pointerTool()->setShader( &standard_shader );
-		vr_system->setPointCloud( &point_cloud );
+		vr_system->setPointCloud( scene.pointCloud() );
 		Sphere::setShader( &standard_shader );
 
 		scene.init();
-
-		point_cloud.setActiveShader( &standard_shader );
-		point_cloud.setMoveTool( vr_system->moveTool() );
-		point_cloud.init();
-		//point_cloud.loadFile( "models/dragon_res2.ply" );
-		point_cloud.loadFile( "models/bunny_res1.ply" );
 	}
 
 	float dt = 0.0;
@@ -130,7 +123,6 @@ int main(int argc, char** argv)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 			scene.render( hmd_view_left, hmd_projection_left );
-			point_cloud.render( hmd_view_left, hmd_projection_left );
 			vr_system->render( hmd_view_left, hmd_projection_left );
 
 			draw_gui();
@@ -144,7 +136,6 @@ int main(int argc, char** argv)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 			scene.render( hmd_view_right, hmd_projection_right );
-			point_cloud.render( hmd_view_right, hmd_projection_right );
 			vr_system->render( hmd_view_right, hmd_projection_right );
 
 			vr_system->blitEyeTextures();
@@ -165,7 +156,6 @@ int main(int argc, char** argv)
 			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 			
 			scene.render( view, projection );
-			point_cloud.render( view, projection );
 			vr_system->render( view, projection );
 
 			draw_gui();

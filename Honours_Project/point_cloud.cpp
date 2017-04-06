@@ -3,6 +3,8 @@
 #include <vector>
 #include <gtc/type_ptr.hpp>
 #include <gtc/matrix_transform.hpp>
+#include <gtx/quaternion.hpp>
+#include <gtx/matrix_decompose.hpp>
 #include "vr_system.h"
 #include "move_tool.h"
 
@@ -63,7 +65,6 @@ void PointCloud::shutdown()
 
 void PointCloud::update( float dt )
 {
-
 }
 
 void PointCloud::render( const glm::mat4& view, const glm::mat4& projection )
@@ -185,15 +186,29 @@ void PointCloud::resetPosition()
 	float scale = 0.6f / std::abs( upper_bound_.x - lower_bound_.x );
 	glm::vec3 position( 0, 0.9, -0.3 - std::abs( upper_bound_.z - lower_bound_.z ) * 0.5f * scale );
 	glm::vec3 center = lower_bound_ + (upper_bound_ - lower_bound_) * 0.5f;
-/*
-	std::cout << "Lower bound " << lower_bound_.x << " " << lower_bound_.y << " " << lower_bound_.z << std::endl;
-	std::cout << "Upper bound " << upper_bound_.x << " " << upper_bound_.y << " " << upper_bound_.z << std::endl;
-	std::cout << "scale amount " << scale << std::endl;
-	std::cout << "center " << center.x << " " << center.y << " " << center.z << std::endl;
-*/
+
 	model_mat_ = glm::mat4();
 	model_mat_ = glm::translate( model_mat_, position );
 	model_mat_ = glm::scale( model_mat_, glm::vec3( scale, scale, scale ) );
 	model_mat_ = glm::translate( model_mat_, -center );
 	offset_mat_ = glm::mat4();
 }
+
+glm::mat4 PointCloud::combinedOffsetMatrix()
+{
+	glm::mat4 combined = model_mat_ * offset_mat_;
+
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose( combined, scale, rotation, translation, skew, perspective );
+
+	glm::mat4 result;
+	
+	result = glm::translate( result, translation );
+	result *= glm::inverse( glm::toMat4( rotation ) );
+
+	return result;
+} 
