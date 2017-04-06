@@ -31,6 +31,7 @@ bool Scene::init()
 	point_cloud_.init();
 
 	init_bunny();
+	start_testing();
 
 	return true;
 }
@@ -47,40 +48,37 @@ void Scene::update( float dt )
 	time += dt;
 
 	// Parent all spheres to the point cloud
-	for( auto& sphere : spheres_ )
+	for( int i = 0; i < spheres_.size(); i++ )
 	{
-		sphere->setParentTransform( point_cloud_.combinedOffsetMatrix() );
+		spheres_[i]->setParentTransform( point_cloud_.combinedOffsetMatrix() );
+		spheres_[i]->setColour( default_sphere_colour_ );
 
 		// Highlight spheres that are touching the pointer
-		if( sphere->isTouching( vr_system_->pointerTool()->sphere() ) )
+		if( spheres_[i]->isTouching( vr_system_->pointerTool()->sphere() ) )
 		{
-			sphere->setColour( highlight_sphere_colour_ );
-		}
-		else
-		{
-			sphere->setColour( default_sphere_colour_ );
-		}
+			spheres_[i]->setColour( highlight_sphere_colour_ );
 
-		sphere->update( dt );
+			if( test_mode_ )
+			{
+				spheres_[i]->setActive( false );
+				int next = i + 1;
+				if( next >= spheres_.size() ) next = 0;
+				spheres_[next]->setActive( true );
+			}
+		}
+		
+		spheres_[i]->update( dt );
 	}
 
 	//ImGui::Text( "Spheres touching: %s", sphere_1_.isTouching( sphere_2_ ) ? "yes" : "no" );
-
 }
 
 void Scene::render( glm::mat4 view, glm::mat4 projection )
 {
-	if( !current_target_ )
+	// Parent all spheres to the point cloud
+	for( auto& sphere : spheres_ )
 	{
-		// Parent all spheres to the point cloud
-		for( auto& sphere : spheres_ )
-		{
-			sphere->render( view, projection );
-		}
-	}
-	else
-	{
-		current_target_->render( view, projection );
+		sphere->render( view, projection );
 	}
 
 	render_floor( view, projection );
@@ -195,8 +193,6 @@ void Scene::init_bunny()
 	addSphere( { 1,1,0 } );
 	addSphere( { 1,1,1 } );
 
-	//current_target_ = spheres_[0].get();
-
 	for( auto& sphere : spheres_ )
 	{
 		sphere->setColour( default_sphere_colour_ );
@@ -206,8 +202,6 @@ void Scene::init_bunny()
 void Scene::init_dragon()
 {
 	point_cloud_.loadFile( "models/dragon_res2.ply" );
-
-	current_target_ = spheres_[0].get();
 }
 
 void Scene::addSphere( glm::vec3 position )
@@ -215,4 +209,31 @@ void Scene::addSphere( glm::vec3 position )
 	spheres_.push_back( std::unique_ptr<Sphere>( new Sphere( position ) ) );
 	spheres_.back()->setShader( &shader_ );
 	spheres_.back()->init();
+}
+
+void Scene::start_testing()
+{
+	test_mode_ = true;
+	start_time_ = SDL_GetTicks();
+
+	if( spheres_.size() > 0 )
+	{
+		spheres_[0]->setActive( true );
+
+		for( int i = 1; i < spheres_.size(); i++ )
+		{
+			spheres_[i]->setActive( false );
+		}
+	}
+}
+
+void Scene::stop_testing()
+{
+	test_mode_ = false;
+	end_time_ = SDL_GetTicks();
+
+	for( auto& sphere : spheres_ )
+	{
+		sphere->setActive( true );
+	}
 }

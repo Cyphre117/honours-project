@@ -18,6 +18,8 @@ public:
 	~Controller();
 
 	void init( vr::TrackedDeviceIndex_t index, VRSystem* vr_system, const ShaderProgram& shader );
+	void shutdown();
+
 	void update( float dt );
 	void draw();
 	void handleEvent( vr::VREvent_t event );
@@ -51,9 +53,9 @@ public:
 	vr::TrackedDevicePose_t pose() const { return pose_; }
 
 protected:
-	bool initialised_;
+	bool initialised_            = false;
 
-	vr::IVRSystem* vr_system_;
+	vr::IVRSystem* vr_system_    = nullptr;
 	vr::TrackedDeviceIndex_t index_;
 
 	// Stores button and axis information
@@ -64,15 +66,17 @@ protected:
 	vr::TrackedDevicePose_t pose_;
 
 	// Tool info
-	VRTool* active_tool_;
+	VRTool* active_tool_         = nullptr;
 
 	// Rendering Info
-	ShaderProgram* shader_;
-	GLuint model_mat_location_;
-	GLuint model_vao_;
-	GLuint model_vbo_;
-	GLuint model_ebo_;
-	GLuint model_texture_;
-	GLsizei model_num_verts_;
-	std::string model_name_;
+	vr::RenderModel_t* vr_model_           = nullptr;
+	vr::RenderModel_TextureMap_t* vr_texture_ = nullptr;
+	ShaderProgram* shader_     = nullptr;
+	GLuint model_mat_location_ = 0;
+	GLuint model_vao_          = 0;
+	GLuint model_vbo_          = 0;
+	GLuint model_ebo_          = 0;
+	GLuint model_texture_      = 0;
+	GLsizei model_num_verts_   = 0;
+	std::string model_name_    = "";
 };

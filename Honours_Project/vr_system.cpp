@@ -27,6 +27,9 @@ VRSystem::~VRSystem()
 	glDeleteFramebuffers( 1, &eye_buffers_[1].render_frame_buffer );
 	glDeleteFramebuffers( 1, &eye_buffers_[1].resolve_frame_buffer );
 
+	left_controller_.shutdown();
+	right_controller_.shutdown();
+
 	vr::VR_Shutdown();
 	// TODO: should i manually delete the vr_system ptr?
 	vr_system_ = nullptr;
@@ -177,6 +180,34 @@ void VRSystem::processVREvents()
 
 	while( vr_system_->PollNextEvent( &event, sizeof( event ) ) )
 	{
+		if( event.eventType == vr::VREvent_TrackedDeviceRoleChanged )
+		{
+			if( event.trackedDeviceIndex == left_controller_.index() )
+			{
+				left_controller_.shutdown();
+				std::cout << "Left controller changed role" << std::endl;
+			}
+			else if( event.trackedDeviceIndex == right_controller_.index() )
+			{
+				right_controller_.shutdown();
+				std::cout << "Right controller changed role" << std::endl;
+			}
+		}
+		else if( event.eventType == vr::VREvent_TrackedDeviceDeactivated )
+		{
+			if( event.trackedDeviceIndex == left_controller_.index() )
+			{
+				left_controller_.shutdown();
+				std::cout << "Left controller disconncted" << std::endl;
+			}
+			else if( event.trackedDeviceIndex == right_controller_.index() )
+			{
+				right_controller_.shutdown();
+				std::cout << "Right controller disconncted" << std::endl;
+			}
+		}
+
+
 		// TODO: handle events
 		//	- Can I handle controllers connected in here?
 		//	- Can I handle controllers disconnected here???
