@@ -2,8 +2,15 @@
 #include "window.h"
 #include "vr_system.h"
 #include "imgui\imgui.h"
+
 #include <gtc/type_ptr.hpp>
 #include <vector>
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <fstream>
+ 
+#include <ctime>
 
 Scene::Scene() {}
 
@@ -31,7 +38,8 @@ bool Scene::init()
 	point_cloud_.init();
 
 	init_bunny();
-	start_testing();
+	//init_testing();
+	//stop_testing();
 
 	return true;
 }
@@ -60,17 +68,73 @@ void Scene::update( float dt )
 
 			if( test_mode_ )
 			{
+				if( i == 0 )
+				{
+					// Start the timer when the user touches the first sphere
+					start_timer();
+				}
+				else
+				{
+					Uint32 current_time = SDL_GetTicks();
+					std::cout << "\t" << i - 1 << " -> " << i << " : "
+						<< (current_time - previous_time_) / 1000.0f << " (s)" << std::endl;
+					previous_time_ = current_time;
+				}
+
 				spheres_[i]->setActive( false );
 				int next = i + 1;
-				if( next >= spheres_.size() ) next = 0;
+				if( next >= spheres_.size() )
+				{
+					next = 0;
+					stop_testing();
+				}
+
 				spheres_[next]->setActive( true );
 			}
 		}
 		
 		spheres_[i]->update( dt );
 	}
+	/*
+	// Helper tool for positioning spheres
+	Controller* right_ctrl = vr_system_->rightControler();
+	static int selected_sphere_index = -1;
+	static glm::vec3 sphere_pos = glm::vec3();
 
-	//ImGui::Text( "Spheres touching: %s", sphere_1_.isTouching( sphere_2_ ) ? "yes" : "no" );
+	if( right_ctrl && right_ctrl->isButtonDown( vr::k_EButton_SteamVR_Trigger ) )
+	{
+		// Click on a sphere to select it
+		if( right_ctrl->isButtonPressed( vr::k_EButton_SteamVR_Trigger ) )
+		{
+			for( int i = 0; i < spheres_.size(); i++ )
+			{
+				if( spheres_[i]->isTouching( vr_system_->pointerTool()->sphere() ) )
+				{
+					selected_sphere_index = i;
+				}
+			}
+		}
+
+		if( selected_sphere_index >= 0 )
+		{
+			spheres_[selected_sphere_index]->setPosition( spheres_[selected_sphere_index]->position() + right_ctrl->velocity() * 0.02f );
+			sphere_pos = spheres_[selected_sphere_index]->position();
+		}
+	}
+
+	// Move the selected sphere
+	if( selected_sphere_index >= 0 )
+	{
+		spheres_[selected_sphere_index]->setColour( highlight_sphere_colour_ );
+		if( right_ctrl && right_ctrl->isButtonPressed( vr::k_EButton_Grip ) )
+		{
+			std::cout << "Sphere[" << selected_sphere_index << "] at: " << sphere_pos.x << ", " << sphere_pos.y << ", " << sphere_pos.z << std::endl;
+		}
+	}
+
+	// Display the position
+	ImGui::Text( "Target position: %.3f %.3f %.3f", sphere_pos.x, sphere_pos.y, sphere_pos.z );
+	*/
 }
 
 void Scene::render( glm::mat4 view, glm::mat4 projection )
@@ -188,10 +252,17 @@ void Scene::init_bunny()
 
 	// Place spheres
 	spheres_.clear();
-	addSphere( { 0,0,0 } );
-	addSphere( { 0,1,0 } );
-	addSphere( { 1,1,0 } );
-	addSphere( { 1,1,1 } );
+	addSphere( { -0.313105,  0.46811,   0.189758 } );
+	addSphere( { -0.0528103, 0.703198, -0.0966756 } );
+	addSphere( { -0.25695,   0.689998, -0.221692 } );
+	addSphere( { -0.108166,  0.483527,  0.0260836 } );
+	addSphere( { -0.269904,  0.149032,  0.0173241 } );
+
+	addSphere( { -0.247861,  0.144324,  0.137183 } );
+	addSphere( { -0.0895841, 0.361093,  0.186468 } );
+	addSphere( {  0.221043,  0.272841,  0.0492226 } );
+	addSphere( { -0.0794307, 0.355922, -0.12658 } );
+	addSphere( { -0.288804,  0.587767,  0.118993 } );
 
 	for( auto& sphere : spheres_ )
 	{
@@ -207,14 +278,22 @@ void Scene::init_dragon()
 void Scene::addSphere( glm::vec3 position )
 {
 	spheres_.push_back( std::unique_ptr<Sphere>( new Sphere( position ) ) );
+	spheres_.back()->setParentTransform( point_cloud_.combinedOffsetMatrix() );
 	spheres_.back()->setShader( &shader_ );
+	spheres_.back()->setRadius( 0.01f );
 	spheres_.back()->init();
 }
 
-void Scene::start_testing()
+void Scene::init_testing()
 {
+	if( test_mode_ )
+	{
+		std::cout << "WARNING: testing was cancelled early!" << std::endl;
+		start_time_ = SDL_GetTicks();
+		stop_testing();
+	}
+
 	test_mode_ = true;
-	start_time_ = SDL_GetTicks();
 
 	if( spheres_.size() > 0 )
 	{
@@ -227,13 +306,75 @@ void Scene::start_testing()
 	}
 }
 
+void Scene::start_timer()
+{
+	times_.clear();
+	
+	start_time_ = SDL_GetTicks();
+	previous_time_ = start_time_;
+	
+	times_.push_back( start_time_ );
+
+	std::cout << "[ Beginning testing ]" << std::endl;
+}
+
 void Scene::stop_testing()
 {
-	test_mode_ = false;
 	end_time_ = SDL_GetTicks();
+	test_mode_ = false;
+	times_.push_back( end_time_ );
+
+	Uint32 time_taken = end_time_ - start_time_;
+
+	std::cout << "[ Done testing ]" << std::endl;
+	std::cout << "\tTotal time taken : " << time_taken/1000.0f << " (s)" << std::endl;
 
 	for( auto& sphere : spheres_ )
 	{
 		sphere->setActive( true );
+	}
+
+	// Format the current time as the name for the file
+	time_t t = std::time( nullptr );
+	std::tm tm;
+	localtime_s( &tm, &t );
+
+	std::ostringstream oss;
+	oss << std::put_time( &tm, "%Y-%m-%d_%H:%M:%S" ) << ".txt";
+	std::string filename = oss.str();
+
+	std::ofstream logfile(filename, std::ios::ate );
+
+	// Dump the times in a log file
+	logfile << "Started at: " << times_[0] << std::endl;
+
+	for( int i = 1; i < times_.size() - 1; i++ )
+	{
+		logfile << i << ":\t" << times_[i] << std::endl;
+	}
+
+	logfile << "Finished at: " << times_.back() << std::endl;
+	logfile << "Time taken: " << (times_.back() - times_.front()) / 1000.0f << " (s)" << std::endl;
+
+	logfile.close();
+	std::cout << "Written log: " << filename << std::endl;
+}
+
+void Scene::toggle_spheres()
+{
+	if( !test_mode_ )
+	{
+		if( spheres_.size() && spheres_[0]->active() )
+		{
+			for( auto& s : spheres_ )
+			{
+				s->setActive( false );
+			}
+		} else {
+			for( auto& s : spheres_ )
+			{
+				s->setActive( true );
+			}
+		}
 	}
 }

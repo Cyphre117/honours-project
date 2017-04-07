@@ -24,12 +24,69 @@
 // - get blitting from multisampled to non multisampled texture working
 // - hand tool movements are the wrong scale
 // - hand tool rotation is not around the controller
-// - incorporate tjh_camera.h!!! It's your time to shine!
 
 enum class RenderMode { VR, Standard };
 
 void set_gl_attribs();
 void draw_gui();
+
+struct AudioData
+{
+	Uint32 length = 0;
+	Uint8* buffer = nullptr;
+};
+
+void audio_callback( void* userdata, Uint8* stream, int length )
+{
+	AudioData* data = (AudioData*)userdata;
+
+	if( data->length <= 0 ) return;
+
+	length = (length > data->length ? data->length : length);
+	SDL_MixAudio( stream, data->buffer, data->length, SDL_MIX_MAXVOLUME );
+
+	data->buffer += length;
+	data->length -= length;
+}
+
+void test_audio()
+{
+	Uint8* wav_buffer;
+	AudioData wav_data;
+	SDL_AudioSpec wav_spec;
+
+	if( SDL_LoadWAV( "audio/sound.wav", &wav_spec, &wav_buffer, &wav_data.length) == NULL )
+	{
+		std::cout << "ERROR: failed to load wav" << std::endl;
+	}
+	else
+	{
+		std::cout << "AUDIO: loaded wav file" << std::endl;
+	}
+
+	wav_spec.callback = audio_callback;
+	wav_spec.userdata = &wav_data;
+	wav_data.buffer = wav_buffer;
+
+	if( SDL_OpenAudio( &wav_spec, nullptr ) )
+	{
+		std::cout << "ERROR: could not open audio device" << std::endl;
+	}
+	else
+	{
+		std::cout << "AUDIO: opened audio device" << std::endl;
+	}
+
+	SDL_PauseAudio( 0 );
+
+	while( wav_data.length )
+	{
+		SDL_Delay( 100 );
+	}
+
+	SDL_CloseAudio();
+	SDL_FreeWAV( wav_buffer );
+}
 
 int main(int argc, char** argv)
 {
@@ -53,6 +110,8 @@ int main(int argc, char** argv)
 	// Second stage initialisation
 	if( running )
 	{
+		test_audio();
+
 		// Shaders
 		standard_shader.init( "colour_shader_vs.glsl", "colour_shader_fs.glsl" );
 		point_light_shader.init( "point_light_shader_vs.glsl", "point_light_shader_fs.glsl" );
@@ -88,6 +147,16 @@ int main(int argc, char** argv)
 					} else {
 						render_mode = RenderMode::VR;
 					}
+				}
+				else if( sdl_event.key.keysym.scancode == SDL_SCANCODE_TAB )
+				{
+					// Resart the testing phase
+					scene.init_testing();
+					std::cout << "Ready for testing" << std::endl;
+				}
+				else if( sdl_event.key.keysym.sym == SDLK_h )
+				{
+					scene.toggle_spheres();
 				}
 			}
 
@@ -206,5 +275,5 @@ void draw_gui()
 	ImGui::Text( "Translation: %f %f %f", system->moveTool()->translation().x, system->moveTool()->translation().y, system->moveTool()->translation().z );
 	ImGui::Text( "Rotation: %f %f %f", system->moveTool()->rotation().x, system->moveTool()->rotation().y, system->moveTool()->rotation().z );
 
-	ImGui::Text( "Point light position: %.3f %.3f %.3f", system->pointLightTool()->lightPos().x, system->pointLightTool()->lightPos().y, system->pointLightTool()->lightPos().z );
+	//ImGui::Text( "Point light position: %.3f %.3f %.3f", system->pointLightTool()->lightPos().x, system->pointLightTool()->lightPos().y, system->pointLightTool()->lightPos().z );
 }

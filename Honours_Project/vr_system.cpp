@@ -178,6 +178,7 @@ void VRSystem::processVREvents()
 {
 	vr::VREvent_t event;
 
+	// Poll the event queue
 	while( vr_system_->PollNextEvent( &event, sizeof( event ) ) )
 	{
 		if( event.eventType == vr::VREvent_TrackedDeviceRoleChanged )
@@ -206,11 +207,6 @@ void VRSystem::processVREvents()
 				std::cout << "Right controller disconncted" << std::endl;
 			}
 		}
-
-
-		// TODO: handle events
-		//	- Can I handle controllers connected in here?
-		//	- Can I handle controllers disconnected here???
 	}
 }
 
@@ -270,7 +266,7 @@ void VRSystem::updateDevices( float dt )
 
 		if( left_controller_.isButtonPressed( vr::k_EButton_Grip ) )
 		{
-			std::cout << "Grip gripped" << std::endl;
+			std::cout << "Reset point cloud location" << std::endl;
 			point_cloud_->resetPosition();
 			move_tool_.resetTransform();
 		}

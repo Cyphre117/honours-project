@@ -77,15 +77,15 @@ void PointerTool::update( float dt )
 		float length = -0.45f + -0.4f * controller_->axis( vr::k_EButton_Axis0 ).y;
 
 		std::vector<GLfloat> verts = {
-			0,0,0, 1,1,1,
-			0,0,length, 1,0,1
+			0.0f, 0.0f, 0.0f,   1.0f, 1.0f, 1.0f,
+			0.0f, 0.0f, length, 1.0f, 0.0f, 1.0f
 		};
 
 		glBufferData( GL_ARRAY_BUFFER, sizeof( verts[0] ) * verts.size(), verts.data(), GL_STREAM_DRAW );
 		num_verts_ = verts.size() / 6;
 
 		sphere_.setActive( true );
-		sphere_.setPosition( { 0, 0, length } );
+		sphere_.setPosition( { 0.0f, 0.0f, length } );
 		sphere_.update( dt );
 	}
 	else

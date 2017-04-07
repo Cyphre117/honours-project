@@ -3,6 +3,7 @@
 #include <vector>
 #include <gtc/type_ptr.hpp>
 #include <gtc/matrix_transform.hpp>
+#include <gtx/matrix_decompose.hpp>
 #include "vr_system.h"
 
 ShaderProgram* Sphere::shader_ = nullptr;
@@ -123,3 +124,16 @@ bool Sphere::isTouching( const Sphere& other ) const
 	float distance = glm::length( parent_transform_ * glm::vec4( position_, 1.0f ) - other.parentTransform() * glm::vec4( other.position(), 1.0f ) );
 	return distance <= radius_ + other.radius() && active_ && other.active();
 }
+
+/*
+void Sphere::printPosition() const
+{
+	glm::mat4 matrix = glm::translate( parent_transform_, position_ );
+	glm::vec3 scale;
+	glm::quat rotation;
+	glm::vec3 translation;
+	glm::vec3 skew;
+	glm::vec4 perspective;
+	glm::decompose( matrix, scale, rotation, translation, skew, perspective );
+}
+*/

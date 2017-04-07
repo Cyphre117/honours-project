@@ -25,6 +25,12 @@ public:
 	void update( float dt );
 	void render( glm::mat4 view, glm::mat4 projection );
 
+	void init_testing();
+	void stop_testing();
+
+	// Hide spheres if testing is disabled
+	void toggle_spheres();
+
 	// Getters
 	PointCloud* pointCloud() { return &point_cloud_; }
 
@@ -45,11 +51,12 @@ protected:
 	GLint proj_matrix_location_ = 0;
 	glm::mat4 model_mat_;
 
+	void start_timer();
 	bool test_mode_ = false;
-	void start_testing();
-	void stop_testing();
 	Uint32 start_time_ = 0;
 	Uint32 end_time_ = 0;
+	Uint32 previous_time_ = 0;
+	std::vector<Uint32> times_;
 
 	void init_floor();
 	void render_floor( glm::mat4 view, glm::mat4 projection );
