@@ -50,14 +50,18 @@ protected:
 	GLint view_matrix_location_ = 0;
 	GLint proj_matrix_location_ = 0;
 	glm::mat4 model_mat_;
-
+	
+	// Testing
 	void start_timer();
-	bool test_mode_ = false;
-	Uint32 start_time_ = 0;
-	Uint32 end_time_ = 0;
+
+	bool test_mode_       = false;
+	Uint32 start_time_    = 0;
+	Uint32 end_time_      = 0;
 	Uint32 previous_time_ = 0;
 	std::vector<Uint32> times_;
+	std::vector<size_t> sphere_indecies_;
 
+	// Scene
 	void init_floor();
 	void render_floor( glm::mat4 view, glm::mat4 projection );
 
@@ -66,4 +70,33 @@ protected:
 
 	GLuint floor_vao_        = 0;
 	GLsizei num_floor_verts_ = 0;
+
+	// Sounds
+	void init_audio();
+	void shutdown_audio();
+	static void audio_callback( void* userdata, Uint8* stream, int length );
+
+	SDL_AudioSpec audio_spec_;
+
+	struct AudioData {
+		Uint8* buffer = nullptr;
+		Uint32 length = 0;
+
+		Uint8* pos = nullptr;
+		Uint32 remaining = 0;
+
+		void reset() {
+			pos = buffer;
+			remaining = length;
+		}
+		void play(SDL_AudioSpec& spec) {
+			reset();
+			spec.userdata = this;
+		}
+	};
+
+	AudioData start_sound_;       // Played when testing begins
+	AudioData done_sound_;        // Played when testing ends
+	AudioData sphere_hit_sound_;  // Played when player touches target
+	AudioData callback_data_;     // This is the info received by the callback
 };

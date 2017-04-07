@@ -110,7 +110,7 @@ int main(int argc, char** argv)
 	// Second stage initialisation
 	if( running )
 	{
-		test_audio();
+		//test_audio();
 
 		// Shaders
 		standard_shader.init( "colour_shader_vs.glsl", "colour_shader_fs.glsl" );

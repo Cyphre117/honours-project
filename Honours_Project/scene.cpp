@@ -9,7 +9,8 @@
 #include <iomanip>
 #include <sstream>
 #include <fstream>
- 
+#include <functional>
+#include <algorithm>
 #include <ctime>
 
 Scene::Scene() {}
@@ -29,6 +30,9 @@ bool Scene::init()
 	view_matrix_location_ = shader_.getUniformLocation( "view" );
 	proj_matrix_location_ = shader_.getUniformLocation( "projection" );
 	
+	// Play sounds during testing to help the user
+	//init_audio();
+
 	// Give the user some ground to stand on
 	init_floor();
 
@@ -46,21 +50,64 @@ bool Scene::init()
 
 void Scene::shutdown()
 {
+	//shutdown_audio();
+
 	glDeleteVertexArrays( 1, &floor_vao_ );
 	floor_vao_ = 0;
 }
 
 void Scene::update( float dt )
 {
-	static float time = 0.0f;
-	time += dt;
+	for( auto& s : spheres_ )
+	{
+		// Parent all spheres to the point cloud
+		s->setParentTransform( point_cloud_.combinedOffsetMatrix() );
 
-	// Parent all spheres to the point cloud
+		// Highlight those touching the cursor
+		if( s->isTouching( vr_system_->pointerTool()->sphere() ) )
+		{
+			s->setColour( highlight_sphere_colour_ );
+		} else {
+			s->setColour( default_sphere_colour_ );
+		}
+	}
+
+	if( test_mode_ )
+	{
+		// Check if the pointer is touching the next sphere in the list
+		if( spheres_[sphere_indecies_.back()]->isTouching( vr_system_->pointerTool()->sphere() ) )
+		{
+			// If it's the first sphere, we can start the timer
+			if( spheres_.size() == sphere_indecies_.size() )
+			{
+				start_timer();
+			}
+
+			// Print out which sphere was hit
+			Uint32 current_time = SDL_GetTicks();
+			std::cout << "\t: " << sphere_indecies_.back() << " took "
+				<< (current_time - previous_time_) / 1000.0f << " (s)" << std::endl;
+			previous_time_ = current_time;
+
+			// Deactivate the sphere that was hit
+			spheres_[sphere_indecies_.back()]->setActive( false );
+			sphere_indecies_.pop_back();
+
+			// Activate the next sphere
+			if( sphere_indecies_.empty() )
+			{
+				stop_testing();
+			}
+			else
+			{
+				spheres_[sphere_indecies_.back()]->setActive( true );
+			}
+		}
+	}
+
+	/*
 	for( int i = 0; i < spheres_.size(); i++ )
 	{
-		spheres_[i]->setParentTransform( point_cloud_.combinedOffsetMatrix() );
-		spheres_[i]->setColour( default_sphere_colour_ );
-
 		// Highlight spheres that are touching the pointer
 		if( spheres_[i]->isTouching( vr_system_->pointerTool()->sphere() ) )
 		{
@@ -68,7 +115,7 @@ void Scene::update( float dt )
 
 			if( test_mode_ )
 			{
-				if( i == 0 )
+				if( spheres_.size() == sphere_indecies_.size() )
 				{
 					// Start the timer when the user touches the first sphere
 					start_timer();
@@ -92,9 +139,15 @@ void Scene::update( float dt )
 				spheres_[next]->setActive( true );
 			}
 		}
-		
-		spheres_[i]->update( dt );
 	}
+	*/
+
+	// Update all the spheres
+	for( auto& s : spheres_ )
+	{
+		s->update( dt );
+	}
+
 	/*
 	// Helper tool for positioning spheres
 	Controller* right_ctrl = vr_system_->rightControler();
@@ -293,17 +346,29 @@ void Scene::init_testing()
 		stop_testing();
 	}
 
-	test_mode_ = true;
-
-	if( spheres_.size() > 0 )
+	// Populate sphere indecies
+	sphere_indecies_.clear();
+	for( size_t i = 0; i < spheres_.size(); i++ )
 	{
-		spheres_[0]->setActive( true );
-
-		for( int i = 1; i < spheres_.size(); i++ )
-		{
-			spheres_[i]->setActive( false );
-		}
+		sphere_indecies_.push_back( i );
 	}
+
+	// Then randomize the order
+	std::random_shuffle( sphere_indecies_.begin(), sphere_indecies_.end() );
+
+	if( !spheres_.empty() )
+	{
+		// Deactivate all the spheres
+		for( auto& s : spheres_ )
+		{
+			s->setActive( false );
+		}
+
+		// Except one
+		spheres_[sphere_indecies_.back()]->setActive( true );
+	}
+
+	test_mode_ = true;
 }
 
 void Scene::start_timer()
@@ -364,17 +429,73 @@ void Scene::toggle_spheres()
 {
 	if( !test_mode_ )
 	{
-		if( spheres_.size() && spheres_[0]->active() )
+		if( !spheres_.empty() && spheres_[0]->active() )
 		{
 			for( auto& s : spheres_ )
 			{
 				s->setActive( false );
 			}
-		} else {
+		}
+		else
+		{
 			for( auto& s : spheres_ )
 			{
 				s->setActive( true );
 			}
 		}
 	}
+}
+
+ void Scene::audio_callback( void* userdata, Uint8* stream, int length )
+{
+	if( !userdata ) return;
+
+	AudioData* data = (AudioData*)userdata;
+	if( data->remaining <= 0 || data->buffer == nullptr ) return;
+
+	length = (length > data->remaining ? data->remaining : length);
+	SDL_MixAudio( stream, data->pos, data->remaining, SDL_MIX_MAXVOLUME );
+
+	data->pos += length;
+	data->remaining -= length;
+}
+ 
+void Scene::init_audio()
+{
+	// Load the files
+	if( SDL_LoadWAV( "audio/sound.wav", &audio_spec_, &sphere_hit_sound_.buffer, &sphere_hit_sound_.length ) == nullptr )
+	{
+		std::cout << "ERROR: failed sphere_hit_sound_" << std::endl;
+	}
+	else sphere_hit_sound_.reset();
+	if( SDL_LoadWAV( "audio/sound_start.wav", &audio_spec_, &start_sound_.buffer, &start_sound_.length ) == nullptr )
+	{
+		std::cout << "ERROR: failed start_sound_" << std::endl;
+	}
+	else start_sound_.reset();
+	if( SDL_LoadWAV( "audio/sound_end.wav", &audio_spec_, &done_sound_.buffer, &done_sound_.length ) == nullptr )
+	{
+		std::cout << "ERROR: failed done_sound_" << std::endl;
+	}
+	else done_sound_.reset();
+
+	audio_spec_.callback = Scene::audio_callback;
+
+	// Open the audio device
+	if( SDL_OpenAudio( &audio_spec_, nullptr ) )
+	{
+		std::cout << "ERROR: failed to open audio device" << std::endl;
+	}
+
+	SDL_PauseAudio( 0 );
+	start_sound_.play( audio_spec_ );
+}
+
+void Scene::shutdown_audio()
+{
+	if( sphere_hit_sound_.buffer ) SDL_FreeWAV( sphere_hit_sound_.buffer );
+	if( start_sound_.buffer ) SDL_FreeWAV( start_sound_.buffer );
+	if( done_sound_.buffer ) SDL_FreeWAV( done_sound_.buffer );
+
+	SDL_CloseAudio();
 }
